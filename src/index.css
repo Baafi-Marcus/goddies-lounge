@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-white text-brand-dark font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-red text-white px-6 py-2 rounded-full hover:bg-red-700 transition-colors duration-300 font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-yellow text-brand-dark px-6 py-2 rounded-full hover:bg-yellow-500 transition-colors duration-300 font-medium;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-lg overflow-hidden;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+}
