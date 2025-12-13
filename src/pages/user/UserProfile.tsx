@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { DeliveryService } from '../../services/neon';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaHistory, FaSignOutAlt, FaPhone, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaUser, FaHistory, FaSignOutAlt, FaPhone, FaEnvelope, FaLock, FaBoxOpen } from 'react-icons/fa';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 
