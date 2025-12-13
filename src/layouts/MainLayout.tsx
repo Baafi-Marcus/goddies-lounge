@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { cartCount } = useCart();
     const { currentUser, userProfile } = useAuth();
     const location = useLocation();
 

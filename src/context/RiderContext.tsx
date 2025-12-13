@@ -82,7 +82,7 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [currentRider, deliveries]);
 
-    const login = async (registrationNumber: string, password: string): Promise<boolean> => {
+    const login = async (registrationNumber: string, _password: string): Promise<boolean> => {
         try {
             // 1. Get rider details including user info
             const riderText = await RiderService.getRiderByRegistration(registrationNumber);

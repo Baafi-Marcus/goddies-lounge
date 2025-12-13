@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { FaCalendarAlt, FaClock, FaUserFriends, FaCheckCircle, FaChair } from 'react-icons/fa';
+import { FaUserFriends, FaCheckCircle, FaChair } from 'react-icons/fa';
 import { useTable, type Table } from '../context/TableContext';
 import ScrollTimePicker from '../components/ScrollTimePicker';
 

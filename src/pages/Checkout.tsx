@@ -121,11 +121,7 @@ const Checkout: React.FC = () => {
         setSubmitting(true);
         try {
             const orderData = {
-                userId: currentUser?.uid, // Using firebase UID for now, but OrderService expects UUID from users table.
-                // Wait, OrderService uses `user_id UUID REFERENCES users(id)`.
-                // I need the user's Internal ID, not Firebase UID.
-                // UserProfile typically contains it?
-                // `userProfile` in AuthContext is fetched from Neon. It has `id`.
+                // Using userProfile.id (UUID from Neon users table) as OrderService expects
                 userId: userProfile?.id,
                 items: cart,
                 totalAmount: totalAmount,

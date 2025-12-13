@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEye, FaCheck, FaTimes, FaMotorcycle, FaSpinner } from 'react-icons/fa';
+import { FaCheck, FaMotorcycle, FaSpinner } from 'react-icons/fa';
 import { OrderService } from '../../services/neon';
 
 interface Order {
@@ -26,7 +26,7 @@ const ManageOrders: React.FC = () => {
     const fetchOrders = async () => {
         try {
             const data = await OrderService.getAllOrders();
-            setOrders(data);
+            setOrders(data as Order[]);
         } catch (error) {
             console.error("Failed to fetch orders", error);
         } finally {
