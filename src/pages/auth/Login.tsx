@@ -11,7 +11,7 @@ import {
     linkWithCredential,
     EmailAuthProvider
 } from '../../services/firebase';
-import { FaEnvelope, FaLock, FaGoogle } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaGoogle, FaUser, FaPhone } from 'react-icons/fa';
 import logo from '../../assets/logo.jpg';
 import { UserService } from '../../services/neon';
 
