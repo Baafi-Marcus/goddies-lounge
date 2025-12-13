@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
 // TODO: Replace with your Neon connection string
-const DATABASE_URL = "postgresql://neondb_owner:npg_T8uw4AYeVtls@ep-floral-pond-ade94g00-pooler.c-2.us-east-1.aws.neon.tech/goddies?sslmode=require";
+const DATABASE_URL = import.meta.env.VITE_DATABASE_URL;
 
 const sql = neon(DATABASE_URL);
 
