@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRider } from '../../context/RiderContext';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCheckCircle, FaBan, FaMotorcycle } from 'react-icons/fa';
+import { FaSearch, FaMotorcycle, FaPhone, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
 
 const ManageRiders: React.FC = () => {
     const { riders, updateRider, deleteRider } = useRider();

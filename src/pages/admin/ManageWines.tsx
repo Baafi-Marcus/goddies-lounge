@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import type { MenuItem } from '../../data/menuData';
 import { MenuService } from '../../services/neon';
 import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
-import { v4 as uuidv4 } from 'uuid';
 
 const ManageWines: React.FC = () => {
     const [items, setItems] = useState<MenuItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [_loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | null>(null);

@@ -64,15 +64,14 @@ const Checkout: React.FC = () => {
         }
     }, [cart, currentUser, loading, navigate]);
 
-    const { register, handleSubmit, control, trigger, formState: { errors }, setValue } = useForm<CheckoutFormValues>({
+    const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<CheckoutFormValues>({
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
-            paymentMethod: 'hubtel',
-            name: userProfile?.full_name || currentUser?.displayName || '',
-            phone: userProfile?.phone || currentUser?.phoneNumber || '',
-        },
-        mode: 'onChange'
+            paymentMethod: 'cash',
+            name: userProfile?.full_name || '',
+            phone: userProfile?.phone || '',
+        }
     });
 
     // Update form values when user profile loads
