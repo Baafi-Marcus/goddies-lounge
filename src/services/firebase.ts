@@ -1,19 +1,48 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, update } from 'firebase/database';
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithPhoneNumber,
+    RecaptchaVerifier,
+    PhoneAuthProvider,
+    updateProfile,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    linkWithCredential,
+    EmailAuthProvider
+} from 'firebase/auth';
 
-// TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAqJgYdNQxD9JFCD3dDA_eGZwHIivmL__w",
+    authDomain: "goddies-lounge.firebaseapp.com",
+    projectId: "goddies-lounge",
+    storageBucket: "goddies-lounge.firebasestorage.app",
+    messagingSenderId: "386661338162",
+    appId: "1:386661338162:web:763adfe3ce4a53113a802b",
+    measurementId: "G-0DCPDM1ZEX",
+    databaseURL: "https://goddies-lounge-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const database = getDatabase(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export const emailProvider = new EmailAuthProvider();
+
+export {
+    signInWithPopup,
+    signInWithPhoneNumber,
+    RecaptchaVerifier,
+    PhoneAuthProvider,
+    updateProfile,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    linkWithCredential,
+    EmailAuthProvider
+};
 
 // Helper to update rider location
 export const updateRiderLocation = (riderId: string, location: { lat: number; lng: number }) => {

@@ -1,21 +1,26 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import PublicMenu from './pages/PublicMenu';
 import About from './pages/About';
 import WineBar from './pages/WineBar';
-import Reservations from './pages/Reservations';
 import Contact from './pages/Contact';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import OrderTracking from './pages/user/OrderTracking';
+import UserProfile from './pages/user/UserProfile';
+
+
+
 
 import { CartProvider } from './context/CartContext';
 import { TableProvider } from './context/TableContext';
 import { RiderProvider } from './context/RiderContext';
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/auth/Login';
 
-import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
@@ -34,52 +39,57 @@ import ActiveDelivery from './pages/rider/ActiveDelivery';
 
 const App: React.FC = () => {
   return (
-    <CartProvider>
-      <TableProvider>
-        <RiderProvider>
-          <Router>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Home />} />
-                <Route path="about" element={<About />} />
-                <Route path="menu" element={<PublicMenu />} />
-                <Route path="contact" element={<Contact />} />
-              </Route>
+    <AuthProvider>
+      <CartProvider>
+        <TableProvider>
+          <RiderProvider>
+            <Router>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<Home />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="menu" element={<PublicMenu />} />
+                  <Route path="contact" element={<Contact />} />
+                  <Route path="login" element={<Login />} />
+                </Route>
 
-              {/* User / Ordering Routes */}
-              <Route path="/user" element={<UserLayout />}>
-                <Route index element={<Navigate to="menu" replace />} />
-                <Route path="menu" element={<Menu />} />
-                <Route path="wine" element={<WineBar />} />
-                <Route path="reservations" element={<Reservations />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="checkout" element={<Checkout />} />
-              </Route>
+                {/* User Routes (Wrapped in MainLayout for Header/Footer) */}
+                <Route path="/user" element={<MainLayout />}>
+                  <Route index element={<Home />} />
+                  <Route path="menu" element={<Menu />} />
+                  <Route path="wine" element={<WineBar />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="cart" element={<Cart />} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="orders" element={<OrderTracking />} />
+                  <Route path="profile" element={<UserProfile />} />
+                </Route>
 
-              {/* Admin Routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="menu" element={<ManageMenu />} />
-                <Route path="wines" element={<ManageWines />} />
-                <Route path="orders" element={<ManageOrders />} />
-                <Route path="reservations" element={<ManageReservations />} />
-                <Route path="deliveries" element={<ManageDeliveries />} />
-                <Route path="riders" element={<ManageRiders />} />
-                <Route path="customers" element={<CustomersList />} />
-              </Route>
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="menu" element={<ManageMenu />} />
+                  <Route path="wines" element={<ManageWines />} />
+                  <Route path="orders" element={<ManageOrders />} />
+                  <Route path="reservations" element={<ManageReservations />} />
+                  <Route path="deliveries" element={<ManageDeliveries />} />
+                  <Route path="riders" element={<ManageRiders />} />
+                  <Route path="customers" element={<CustomersList />} />
+                </Route>
 
-              {/* Rider Routes */}
-              <Route path="/rider/login" element={<RiderLogin />} />
-              <Route path="/rider/dashboard" element={<RiderDashboard />} />
-              <Route path="/rider/pickup" element={<PickupVerification />} />
-              <Route path="/rider/delivery/:id" element={<ActiveDelivery />} />
-            </Routes>
-          </Router>
-        </RiderProvider>
-      </TableProvider>
-    </CartProvider>
+                {/* Rider Routes */}
+                <Route path="/rider/login" element={<RiderLogin />} />
+                <Route path="/rider/dashboard" element={<RiderDashboard />} />
+                <Route path="/rider/pickup" element={<PickupVerification />} />
+                <Route path="/rider/delivery/:id" element={<ActiveDelivery />} />
+              </Routes>
+            </Router>
+          </RiderProvider>
+        </TableProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useRider } from '../../context/RiderContext';
-import { FaMotorcycle, FaUser, FaLock, FaEnvelope, FaPhone, FaCar, FaBicycle } from 'react-icons/fa';
+import { FaMotorcycle, FaUser, FaLock, FaEnvelope, FaPhone } from 'react-icons/fa';
 
 const RiderLogin: React.FC = () => {
     const navigate = useNavigate();
@@ -26,11 +26,11 @@ const RiderLogin: React.FC = () => {
         confirmPassword: '',
     });
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        const success = login(loginData.registrationNumber, loginData.password);
+        const success = await login(loginData.registrationNumber, loginData.password);
         if (success) {
             navigate('/rider/dashboard');
         } else {
@@ -38,7 +38,7 @@ const RiderLogin: React.FC = () => {
         }
     };
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -55,13 +55,14 @@ const RiderLogin: React.FC = () => {
         // Generate registration number
         const registrationNumber = `RDR${Date.now().toString().slice(-6)}`;
 
-        addRider({
+        await addRider({
             registrationNumber,
             name: registerData.name,
             email: registerData.email,
             phone: registerData.phone,
             vehicleType: registerData.vehicleType,
             vehicleNumber: registerData.vehicleNumber,
+            password: registerData.password, // Pass password for user creation
             status: 'inactive', // Requires admin approval
         });
 
@@ -96,8 +97,8 @@ const RiderLogin: React.FC = () => {
                         <button
                             onClick={() => setIsRegistering(false)}
                             className={`flex-1 py-4 font-bold transition-colors ${!isRegistering
-                                    ? 'bg-brand-yellow text-brand-dark'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                ? 'bg-brand-yellow text-brand-dark'
+                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             Login
@@ -105,8 +106,8 @@ const RiderLogin: React.FC = () => {
                         <button
                             onClick={() => setIsRegistering(true)}
                             className={`flex-1 py-4 font-bold transition-colors ${isRegistering
-                                    ? 'bg-brand-yellow text-brand-dark'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                ? 'bg-brand-yellow text-brand-dark'
+                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             Register

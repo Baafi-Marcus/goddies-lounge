@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 export interface CartItem {
     id: string;
@@ -10,7 +10,7 @@ export interface CartItem {
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+    addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
@@ -30,15 +30,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('cart', JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+    const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+        const qtyToAdd = item.quantity || 1;
+        // Remove quantity from the item object before spreading to avoid type issues if it was explicitly passed
+        const { quantity, ...itemData } = item;
+
         setCart((prevCart) => {
-            const existingItem = prevCart.find((i) => i.id === item.id);
+            const existingItem = prevCart.find((i) => i.id === itemData.id);
             if (existingItem) {
                 return prevCart.map((i) =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+                    i.id === itemData.id ? { ...i, quantity: i.quantity + qtyToAdd } : i
                 );
             }
-            return [...prevCart, { ...item, quantity: 1 }];
+            return [...prevCart, { ...itemData, quantity: qtyToAdd }];
         });
     };
 

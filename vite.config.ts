@@ -7,5 +7,8 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true, // Enable network access
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+    },
   },
 })

@@ -2,15 +2,29 @@ import React, { useState, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import { Link } from 'react-router-dom';
 import { FaUtensils, FaWineGlass, FaMotorcycle, FaArrowRight, FaChevronDown } from 'react-icons/fa';
-import { menuData } from '../data/menuData';
-import { wineData } from '../data/wineData';
+import { MenuService } from '../services/neon';
+import type { MenuItem } from '../data/menuData';
 import heroVideo1 from '../assets/hero-video-1.mp4';
 import heroVideo2 from '../assets/hero-video-2.mp4';
 
 const Home: React.FC = () => {
     const [currentVideo, setCurrentVideo] = useState(0);
     const [isYoutubeError, setIsYoutubeError] = useState(false);
+    const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
     const videos = [heroVideo1, heroVideo2];
+
+    useEffect(() => {
+        const fetchItems = async () => {
+            try {
+                const allItems = await MenuService.getAllItems();
+                // Pick some items for the marquee (e.g., first 6)
+                setFeaturedItems(allItems.slice(0, 6));
+            } catch (error) {
+                console.error("Failed to load home items", error);
+            }
+        };
+        fetchItems();
+    }, []);
 
     useEffect(() => {
         // Only cycle local videos if using them
@@ -138,8 +152,8 @@ const Home: React.FC = () => {
                     <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
 
                     <div className="flex animate-marquee gap-6 w-max hover:pause px-4">
-                        {/* Showing strictly 6 items as requested */}
-                        {[...menuData.slice(0, 3), ...wineData.slice(0, 3)].map((item, index) => (
+                        {/* Showing dynamically fetched items */}
+                        {featuredItems.map((item, index) => (
                             <div key={`${item.id}-${index}`} className="w-72 bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden flex-shrink-0 border border-gray-100 transform transition-all duration-300 hover:-translate-y-1 group">
                                 <div className="h-48 overflow-hidden relative">
                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -156,7 +170,7 @@ const Home: React.FC = () => {
                                     </div>
                                     <p className="text-gray-500 text-xs mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
                                     <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                        <span className="font-heading font-bold text-xl text-brand-red">₵{item.price.toFixed(2)}</span>
+                                        <span className="font-heading font-bold text-xl text-brand-red">₵{Number(item.price).toFixed(2)}</span>
                                         <Link to="/user/menu" className="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center hover:bg-brand-yellow hover:text-brand-dark transition-colors shadow-md">
                                             <FaArrowRight size={12} />
                                         </Link>

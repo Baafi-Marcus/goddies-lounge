@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { menuData } from '../../data/menuData';
 import type { MenuItem } from '../../data/menuData';
+import { MenuService } from '../../services/neon';
 import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 
 const ManageMenu: React.FC = () => {
-    const [items, setItems] = useState<MenuItem[]>(() => {
-        const savedItems = localStorage.getItem('menuItems');
-        return savedItems ? JSON.parse(savedItems) : menuData;
-    });
+    const [items, setItems] = useState<MenuItem[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -21,16 +19,32 @@ const ManageMenu: React.FC = () => {
     });
 
     useEffect(() => {
-        localStorage.setItem('menuItems', JSON.stringify(items));
-    }, [items]);
+        loadItems();
+    }, []);
+
+    const loadItems = async () => {
+        setLoading(true);
+        try {
+            const allItems = await MenuService.getAllItems();
+            // Filter: Exclude Drinks (Wines, Spirits, etc. managed in ManageWines)
+            const foodItems = allItems.filter((i: any) =>
+                !['Wines', 'Champagne', 'Spirits', 'Local', 'Red Wine', 'White Wine'].includes(i.category)
+            );
+            setItems(foodItems);
+        } catch (e) {
+            console.error("Failed to load menu", e);
+        }
+        setLoading(false);
+    };
 
     const filteredItems = items.filter((item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (window.confirm('Are you sure you want to delete this item?')) {
-            setItems(items.filter((item) => item.id !== id));
+            await MenuService.deleteItem(id);
+            loadItems();
         }
     };
 
@@ -47,27 +61,25 @@ const ManageMenu: React.FC = () => {
             description: '',
             price: 0,
             category: 'Pizza',
-            image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1480&q=80', // Default placeholder
+            image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1480&q=80',
         });
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingItem) {
-            setItems(
-                items.map((item) =>
-                    item.id === editingItem.id ? { ...item, ...formData } as MenuItem : item
-                )
-            );
-        } else {
-            const newItem: MenuItem = {
-                id: uuidv4(),
-                ...formData as MenuItem,
-            };
-            setItems([...items, newItem]);
+        try {
+            if (editingItem) {
+                await MenuService.updateItem(editingItem.id, formData);
+            } else {
+                await MenuService.createItem(formData);
+            }
+            setIsModalOpen(false);
+            loadItems();
+        } catch (e) {
+            console.error("Failed to save item", e);
+            alert("Failed to save item. See console.");
         }
-        setIsModalOpen(false);
     };
 
     return (
@@ -121,7 +133,7 @@ const ManageMenu: React.FC = () => {
                                             {item.category}
                                         </span>
                                     </td>
-                                    <td className="p-4 font-bold">₵{item.price.toFixed(2)}</td>
+                                    <td className="p-4 font-bold">₵{Number(item.price).toFixed(2)}</td>
                                     <td className="p-4">
                                         <div className="flex gap-2">
                                             <button

@@ -11,15 +11,15 @@ const ManageRiders: React.FC = () => {
         rider.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleStatusChange = (riderId: string, newStatus: 'active' | 'inactive' | 'suspended') => {
+    const handleStatusChange = async (riderId: string, newStatus: 'active' | 'inactive' | 'suspended') => {
         if (window.confirm(`Are you sure you want to change this rider's status to ${newStatus}?`)) {
-            updateRider(riderId, { status: newStatus });
+            await updateRider(riderId, { status: newStatus });
         }
     };
 
-    const handleDelete = (riderId: string) => {
+    const handleDelete = async (riderId: string) => {
         if (window.confirm('Are you sure you want to delete this rider? This action cannot be undone.')) {
-            deleteRider(riderId);
+            await deleteRider(riderId);
         }
     };
 
@@ -103,14 +103,14 @@ const ManageRiders: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 font-bold text-brand-dark">{rider.totalDeliveries}</td>
-                                    <td className="p-4 font-bold text-green-600">₵{rider.totalEarnings.toFixed(2)}</td>
+                                    <td className="p-4 font-bold text-green-600">₵{(rider.totalEarnings || 0).toFixed(2)}</td>
                                     <td className="p-4">
                                         <select
                                             value={rider.status}
                                             onChange={(e) => handleStatusChange(rider.id, e.target.value as any)}
                                             className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${rider.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                    rider.status === 'suspended' ? 'bg-red-100 text-red-700' :
-                                                        'bg-yellow-100 text-yellow-700'
+                                                rider.status === 'suspended' ? 'bg-red-100 text-red-700' :
+                                                    'bg-yellow-100 text-yellow-700'
                                                 }`}
                                         >
                                             <option value="active">Active</option>

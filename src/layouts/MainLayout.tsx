@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FaShoppingCart, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp } from 'react-icons/fa';
+import { FaShoppingCart, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp, FaUser } from 'react-icons/fa';
 import { MdRestaurantMenu } from 'react-icons/md';
 import logo from '../assets/logo.jpg';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { cartCount } = useCart();
+    const { currentUser, userProfile } = useAuth();
     const location = useLocation();
 
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -19,32 +21,43 @@ const MainLayout: React.FC = () => {
         { name: 'Contact', path: '/contact', icon: <FaEnvelope /> },
     ];
 
-    const isActive = (path: string) => location.pathname === path;
+    const userLinks = [
+        { name: 'Menu', path: '/user/menu', icon: <MdRestaurantMenu /> },
+        { name: 'Orders', path: '/user/orders', icon: <FaUtensils /> },
+        { name: 'Profile', path: '/user/profile', icon: <FaUser /> },
+        { name: 'My Cart', path: '/user/cart', icon: <FaShoppingCart /> },
+    ];
 
+    const isActive = (path: string) => location.pathname === path;
     const isHome = location.pathname === '/';
+    const isLogin = location.pathname === '/login';
+    const isTransparent = isHome || isLogin;
+    const isUserPage = location.pathname.startsWith('/user');
+
+    const currentLinks = isUserPage ? userLinks : navLinks;
 
     return (
         <div className="flex flex-col min-h-screen font-sans text-brand-dark">
             {/* Header */}
-            <header className={`transition-all duration-300 z-50 ${isHome ? 'absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent pb-8' : 'sticky top-0 bg-brand-white shadow-md'}`}>
+            <header className={`transition-all duration-300 z-50 ${isTransparent ? 'absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent pb-8' : 'sticky top-0 bg-brand-white shadow-md'}`}>
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     {/* Logo */}
-                    <Link to="/" className="flex flex-col items-center gap-1">
+                    <Link to={isUserPage ? "/user/menu" : "/"} className="flex flex-col items-center gap-1">
                         <img src={logo} alt="Goddies Lounge" className="h-16 w-auto object-contain rounded-md shadow-sm" />
-                        <span className={`text-sm font-heading font-bold tracking-wide ${isHome ? 'text-white drop-shadow-md' : 'text-brand-dark'}`}>
-                            Goddies <span className={`${isHome ? 'text-brand-yellow' : 'text-brand-red'}`}>Lounge & Wine Bar</span>
+                        <span className={`text-sm font-heading font-bold tracking-wide ${isTransparent ? 'text-white drop-shadow-md' : 'text-brand-dark'}`}>
+                            Goddies <span className={`${isTransparent ? 'text-brand-yellow' : 'text-brand-red'}`}>Lounge & Wine Bar</span>
                         </span>
                     </Link>
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8">
-                        {navLinks.map((link) => (
+                        {currentLinks.map((link) => (
                             <Link
                                 key={link.name}
                                 to={link.path}
                                 className={`flex items-center gap-2 font-medium transition-colors duration-300 hover:text-brand-yellow ${isActive(link.path)
-                                    ? (isHome ? 'text-brand-yellow font-bold' : 'text-brand-red font-bold')
-                                    : (isHome ? 'text-white/90 hover:text-white' : 'text-gray-600 hover:text-brand-red')
+                                    ? (isTransparent ? 'text-brand-yellow font-bold' : 'text-brand-red font-bold')
+                                    : (isTransparent ? 'text-white/90 hover:text-white' : 'text-gray-600 hover:text-brand-red')
                                     }`}
                             >
                                 {link.icon}
@@ -55,15 +68,29 @@ const MainLayout: React.FC = () => {
 
                     {/* Actions */}
                     <div className="hidden md:flex items-center gap-4">
-
-                        <Link to="/user/menu" className="btn-primary shadow-lg border-2 border-transparent hover:border-white/20">
-                            Order Now
-                        </Link>
+                        {!isUserPage && (
+                            <Link to="/user/menu" className="btn-primary shadow-lg border-2 border-transparent hover:border-white/20">
+                                Order Now
+                            </Link>
+                        )}
+                        {currentUser ? (
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                                {!isHome && (
+                                    <Link to="/user/profile" className={`hover:text-brand-yellow ${isTransparent ? 'text-white' : 'text-brand-dark'}`}>
+                                        Hi, {userProfile?.full_name || currentUser.displayName || 'User'}
+                                    </Link>
+                                )}
+                            </div>
+                        ) : (
+                            <Link to="/login" className={`text-sm font-bold ${isTransparent ? 'text-white' : 'text-brand-dark'} hover:text-brand-yellow`}>
+                                Login
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
                     <button
-                        className={`${isHome ? 'text-white' : 'text-brand-dark'} md:hidden focus:outline-none`}
+                        className={`${isTransparent ? 'text-white' : 'text-brand-dark'} md:hidden focus:outline-none`}
                         onClick={toggleMenu}
                     >
                         {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -74,7 +101,7 @@ const MainLayout: React.FC = () => {
                 {isMobileMenuOpen && (
                     <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 shadow-lg absolute w-full left-0 text-brand-dark">
                         <nav className="flex flex-col gap-4">
-                            {navLinks.map((link) => (
+                            {currentLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     to={link.path}

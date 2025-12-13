@@ -26,10 +26,10 @@ const PickupVerification: React.FC = () => {
         d => d.riderId === currentRider.id && d.status === 'assigned'
     );
 
-    const handleQRScan = (decodedText: string) => {
+    const handleQRScan = async (decodedText: string) => {
         const parsed = parseQRCodeData(decodedText);
         if (parsed) {
-            const success = pickupDelivery(parsed.deliveryId, parsed.verificationCode);
+            const success = await pickupDelivery(parsed.deliveryId, parsed.verificationCode);
             if (success) {
                 setSuccess(true);
                 setTimeout(() => {
@@ -43,7 +43,7 @@ const PickupVerification: React.FC = () => {
         }
     };
 
-    const handleManualVerification = (e: React.FormEvent) => {
+    const handleManualVerification = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -57,7 +57,7 @@ const PickupVerification: React.FC = () => {
             return;
         }
 
-        const successResult = pickupDelivery(deliveryId, manualCode);
+        const successResult = await pickupDelivery(deliveryId, manualCode);
         if (successResult) {
             setSuccess(true);
             setTimeout(() => {

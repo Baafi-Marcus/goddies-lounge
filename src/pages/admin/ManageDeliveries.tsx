@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRider } from '../../context/RiderContext';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaQrcode, FaEye, FaUserPlus } from 'react-icons/fa';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaQrcode, FaUserPlus } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateQRCodeData } from '../../utils/qrCodeGenerator';
 
@@ -12,8 +12,8 @@ const ManageDeliveries: React.FC = () => {
 
     const activeRiders = riders.filter(r => r.status === 'active');
 
-    const handleAssignRider = (deliveryId: string, riderId: string) => {
-        assignDelivery(deliveryId, riderId);
+    const handleAssignRider = async (deliveryId: string, riderId: string) => {
+        await assignDelivery(deliveryId, riderId);
         setAssignModal(null);
     };
 

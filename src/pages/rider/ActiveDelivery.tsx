@@ -39,7 +39,7 @@ const ActiveDelivery: React.FC = () => {
         );
     }
 
-    const handleCompleteDelivery = (e: React.FormEvent) => {
+    const handleCompleteDelivery = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -48,7 +48,7 @@ const ActiveDelivery: React.FC = () => {
             return;
         }
 
-        const successResult = completeDelivery(delivery.id, customerCode);
+        const successResult = await completeDelivery(delivery.id, customerCode);
         if (successResult) {
             setSuccess(true);
             setTimeout(() => {

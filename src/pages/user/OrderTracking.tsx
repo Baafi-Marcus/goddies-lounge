@@ -1,0 +1,248 @@
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { OrderService, DeliveryService } from '../../services/neon';
+import { Link } from 'react-router-dom';
+import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaMapMarkerAlt, FaTools } from 'react-icons/fa';
+
+interface Order {
+    id: string;
+    total_amount: number;
+    status: string;
+    created_at: string;
+    items: any; // JSONB
+    delivery_type: 'delivery' | 'pickup';
+    delivery?: any; // Rider details if delivery
+}
+
+const OrderTracking: React.FC = () => {
+    const { userProfile, loading: authLoading } = useAuth();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!authLoading && userProfile?.id) {
+            fetchOrders();
+            // Poll every 30 seconds for status updates
+            const interval = setInterval(fetchOrders, 30000);
+            return () => clearInterval(interval);
+        } else if (!authLoading && !userProfile) {
+            setLoading(false);
+        }
+    }, [userProfile, authLoading]);
+
+    const fetchOrders = async () => {
+        try {
+            const userOrders = await OrderService.getUserOrders(userProfile!.id);
+
+            // Enrich with delivery details if applicable
+            const enrichedOrders = await Promise.all(userOrders.map(async (order: any) => {
+                if (order.delivery_type === 'delivery' && ['assigned', 'in_transit', 'delivered'].includes(order.status)) {
+                    // Try to fetch delivery info
+                    // Note: This relies on the backend actually creating delivery records which might not be fully hooked up yet in Admin.
+                    // But we try nonetheless.
+                    try {
+                        const delivery = await DeliveryService.getDeliveryWithRider(order.id);
+                        if (delivery) {
+                            return { ...order, delivery };
+                        }
+                    } catch (e) {
+                        // Ignore if no delivery record found
+                    }
+                }
+                return order;
+            }));
+
+            setOrders(enrichedOrders);
+        } catch (error) {
+            console.error("Failed to load orders", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getStatusStep = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending': return 1;
+            case 'preparing': return 2;
+            case 'ready': return 3;
+            case 'assigned': return 3; // For delivery
+            case 'in_transit': return 4;
+            case 'delivered': return 5;
+            default: return 0;
+        }
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending': return 'bg-yellow-100 text-yellow-700';
+            case 'preparing': return 'bg-blue-100 text-blue-700';
+            case 'ready': return 'bg-green-100 text-green-700';
+            case 'assigned':
+            case 'in_transit': return 'bg-orange-100 text-orange-700';
+            case 'delivered': return 'bg-brand-dark text-white';
+            case 'cancelled': return 'bg-red-100 text-red-700';
+            default: return 'bg-gray-100 text-gray-600';
+        }
+    };
+
+    if (authLoading || loading) return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-red"></div>
+        </div>
+    );
+
+    if (!orders.length) return (
+        <div className="min-h-screen bg-gray-50 py-12 px-4 flex flex-col items-center justify-center text-center">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 max-w-md w-full">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400 text-3xl">
+                    <FaBoxOpen />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">No Orders Yet</h2>
+                <p className="text-gray-500 mb-8">Looks like you haven't placed an order yet. Hungry?</p>
+                <Link to="/user/menu" className="btn-primary inline-flex">
+                    Browse Menu
+                </Link>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen bg-gray-50 py-10 px-4">
+            <div className="container mx-auto max-w-4xl">
+                <h1 className="text-3xl font-heading font-bold text-brand-dark mb-8">My Orders</h1>
+
+                <div className="space-y-6">
+                    {orders.map((order) => {
+                        const currentStep = getStatusStep(order.status);
+                        const isDelivery = order.delivery_type === 'delivery';
+
+                        return (
+                            <div key={order.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-fade-in group">
+                                {/* Header */}
+                                <div className="p-6 border-b border-gray-50 flex flex-wrap justify-between items-center gap-4 bg-gray-50/50">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <span className="font-bold text-lg text-gray-800">Order #{order.id.slice(0, 8)}...</span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
+                                                {order.status.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-gray-500 flex items-center gap-2">
+                                            <FaClock className="text-gray-400" />
+                                            {new Date(order.created_at).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-xl text-brand-dark">₵{Number(order.total_amount).toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500 uppercase font-bold">{order.delivery_type}</p>
+                                    </div>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="p-6 pb-2">
+                                    <div className="relative">
+                                        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0 rounded-full"></div>
+                                        <div
+                                            className="absolute top-1/2 left-0 h-1 bg-brand-red -translate-y-1/2 z-0 rounded-full transition-all duration-1000 ease-out"
+                                            style={{ width: `${(Math.max(0, currentStep - 1) / (isDelivery ? 4 : 2)) * 100}%` }}
+                                        ></div>
+
+                                        <div className="relative z-10 flex justify-between">
+                                            <StepIcon step={1} current={currentStep} icon={<FaCheckCircle />} label="Placed" />
+                                            <StepIcon step={2} current={currentStep} icon={<FaTools />} label="Preparing" />
+                                            {isDelivery ? (
+                                                <>
+                                                    <StepIcon step={3} current={currentStep} icon={<FaMotorcycle />} label="On the Way" />
+                                                    <StepIcon step={5} current={currentStep} icon={<FaCheckCircle />} label="Delivered" />
+                                                </>
+                                            ) : (
+                                                <StepIcon step={3} current={currentStep} icon={<FaCheckCircle />} label="Ready" />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Items & Delivery Info */}
+                                <div className="p-6 pt-2 flex flex-col md:flex-row gap-8">
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wider">Items</h4>
+                                        <ul className="space-y-3">
+                                            {order.items.map((item: any, idx: number) => (
+                                                <li key={idx} className="flex gap-4 text-sm items-center">
+                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                                                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="flex-grow">
+                                                        <p className="font-medium text-gray-800">{item.name}</p>
+                                                        <p className="text-gray-500 text-xs">Qty: {item.quantity}</p>
+                                                    </div>
+                                                    <span className="font-medium text-gray-600">₵{(item.price * item.quantity).toFixed(2)}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Rider / Pickup Info */}
+                                    {isDelivery && order.delivery && order.delivery.rider_name ? (
+                                        <div className="md:w-72 bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                                <FaMotorcycle className="text-brand-red" /> Rider Details
+                                            </h4>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Rider Name</p>
+                                                    <p className="font-bold">{order.delivery.rider_name}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Vehicle</p>
+                                                    <p className="font-medium">{order.delivery.vehicle_type} - {order.delivery.vehicle_number}</p>
+                                                </div>
+                                                {order.delivery.rider_phone && (
+                                                    <a
+                                                        href={`tel:${order.delivery.rider_phone}`}
+                                                        className="block w-full py-3 bg-brand-dark text-white text-center rounded-xl font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <FaPhone className="text-sm" /> Call Rider
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : isDelivery && currentStep >= 3 ? (
+                                        <div className="md:w-72 bg-orange-50 rounded-2xl p-5 border border-orange-100 flex items-center justify-center text-center">
+                                            <div>
+                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 text-orange-500 shadow-sm animate-pulse">
+                                                    <FaMotorcycle />
+                                                </div>
+                                                <p className="font-bold text-orange-800">Finding you a rider...</p>
+                                                <p className="text-xs text-orange-600 mt-1">We are assigning the nearest rider.</p>
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Helper Subcomponent
+const StepIcon = ({ step, current, icon, label }: { step: number, current: number, icon: React.ReactNode, label: string }) => {
+    const isActive = current >= step;
+    return (
+        <div className="flex flex-col items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${isActive ? 'bg-brand-red text-white shadow-lg scale-110' : 'bg-gray-200 text-gray-400'
+                }`}>
+                {icon}
+            </div>
+            <span className={`text-[10px] mt-2 font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-brand-red' : 'text-gray-400'
+                }`}>
+                {label}
+            </span>
+        </div>
+    );
+};
+
+export default OrderTracking;

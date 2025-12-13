@@ -79,7 +79,7 @@ const RiderDashboard: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm">Total Earnings</p>
-                                <p className="text-2xl font-bold text-brand-dark">₵{currentRider.totalEarnings.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-brand-dark">₵{(currentRider.totalEarnings || 0).toFixed(2)}</p>
                             </div>
                         </div>
                     </div>

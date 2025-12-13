@@ -6,7 +6,9 @@ import { useCart } from '../context/CartContext';
 import { locations } from '../data/locations';
 import ScrollTimePicker from '../components/ScrollTimePicker';
 import { FaTruck, FaStore, FaCreditCard, FaMoneyBillWave, FaArrowLeft, FaCheckCircle, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { OrderService } from '../services/neon';
 
 // Validation Schema
 const schema = yup.object().shape({
@@ -45,25 +47,41 @@ interface CheckoutFormValues {
 
 const Checkout: React.FC = () => {
     const { cart, cartTotal, clearCart } = useCart();
+    const { currentUser, userProfile, loading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState(1);
 
-    // Redirect if cart is empty
+    // Redirect if cart is empty or not logged in
     useEffect(() => {
-        if (cart.length === 0) {
-            navigate('/user/cart');
+        if (!loading) {
+            if (!currentUser) {
+                navigate('/login', { state: { from: location } });
+            } else if (cart.length === 0) {
+                navigate('/user/cart');
+            }
         }
-    }, [cart, navigate]);
+    }, [cart, currentUser, loading, navigate]);
 
-    const { register, handleSubmit, control, trigger, formState: { errors } } = useForm<CheckoutFormValues>({
+    const { register, handleSubmit, control, trigger, formState: { errors }, setValue } = useForm<CheckoutFormValues>({
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
-            paymentMethod: 'hubtel'
+            paymentMethod: 'hubtel',
+            name: userProfile?.full_name || currentUser?.displayName || '',
+            phone: userProfile?.phone || currentUser?.phoneNumber || '',
         },
         mode: 'onChange'
     });
+
+    // Update form values when user profile loads
+    useEffect(() => {
+        if (userProfile || currentUser) {
+            setValue('name', userProfile?.full_name || currentUser?.displayName || '');
+            setValue('phone', userProfile?.phone || currentUser?.phoneNumber || '');
+        }
+    }, [userProfile, currentUser, setValue]);
 
     // Watch fields for dynamic UI
     const orderType = useWatch({ control, name: 'orderType' });
@@ -101,14 +119,33 @@ const Checkout: React.FC = () => {
 
     const onSubmit: SubmitHandler<CheckoutFormValues> = async (data) => {
         setSubmitting(true);
-        // Simulate API Call
-        setTimeout(() => {
-            console.log("Order Data:", { ...data, cart, totalAmount, deliveryFee });
-            alert(`Order Placed Successfully! Method: ${data.orderType}. Total: ₵${totalAmount}`);
+        try {
+            const orderData = {
+                userId: currentUser?.uid, // Using firebase UID for now, but OrderService expects UUID from users table.
+                // Wait, OrderService uses `user_id UUID REFERENCES users(id)`.
+                // I need the user's Internal ID, not Firebase UID.
+                // UserProfile typically contains it?
+                // `userProfile` in AuthContext is fetched from Neon. It has `id`.
+                userId: userProfile?.id,
+                items: cart,
+                totalAmount: totalAmount,
+                status: 'pending',
+                deliveryType: data.orderType,
+                deliveryAddress: data.orderType === 'delivery' ? data.address : `Pickup at ${data.pickupTime}`,
+                paymentMethod: data.paymentMethod
+            };
+
+            await OrderService.createOrder(orderData);
+
             clearCart();
-            navigate('/');
+            // Navigate to Order History/Tracking
+            navigate('/user/orders');
+        } catch (error) {
+            console.error("Checkout Error:", error);
+            alert("Failed to place order. Please try again.");
+        } finally {
             setSubmitting(false);
-        }, 1500);
+        }
     };
 
     if (cart.length === 0) return null;
