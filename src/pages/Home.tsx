@@ -58,15 +58,14 @@ const Home: React.FC = () => {
                                 height="100%"
                                 config={{
                                     youtube: {
-                                        start: 7,
-                                        end: 163,
-                                        showinfo: 0,
-                                        controls: 0,
-                                        rel: 0,
-                                        iv_load_policy: 3,
-                                        modestbranding: 1,
-                                        disablekb: 1,
-                                        playsInline: 1
+                                        playerVars: {
+                                            start: 7,
+                                            end: 163,
+                                            rel: 0,
+                                            iv_load_policy: 3,
+                                            modestbranding: 1,
+                                            disablekb: 1
+                                        }
                                     }
                                 }}
                                 onError={() => setIsYoutubeError(true)}
