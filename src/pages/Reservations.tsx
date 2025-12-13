@@ -12,19 +12,19 @@ const schema = yup.object({
     phone: yup.string().required('Phone number is required'),
     date: yup.string().required('Date is required'),
     time: yup.string().required('Time is required'),
-    guests: yup.number().min(1, 'At least 1 guest').max(20, 'Max 20 guests').required('Number of guests is required'),
-    notes: yup.string(),
-    tableId: yup.string().required('Please select a table from the layout'),
-}).required();
+    guests: yup.number().min(1, 'At least 1 guest required').max(20, 'Max 20 guests').required('Number of guests is required'),
+    notes: yup.string().optional(),
+    tableId: yup.string().required('Please select a table'),
+});
 
-type FormData = yup.InferType<typeof schema>;
+type ReservationFormValues = yup.InferType<typeof schema>;
 
 const Reservations: React.FC = () => {
     const { tables } = useTable();
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [selectedTable, setSelectedTable] = useState<Table | null>(null);
 
-    const { register, handleSubmit, setValue, control, formState: { errors }, reset, watch } = useForm<FormData>({
+    const { register, handleSubmit, setValue, control, formState: { errors }, reset, watch } = useForm<ReservationFormValues>({
         resolver: yupResolver(schema),
     });
 
@@ -34,7 +34,7 @@ const Reservations: React.FC = () => {
         setValue('guests', table.seats); // Auto-fill guests based on table size
     };
 
-    const onSubmit = (data: FormData) => {
+    const onSubmit: import('react-hook-form').SubmitHandler<ReservationFormValues> = (data) => {
         console.log(data);
         // Simulate API call
         setTimeout(() => {

@@ -82,7 +82,7 @@ const PickupVerification: React.FC = () => {
                     handleQRScan(decodedText);
                     scanner.clear();
                 },
-                (error) => {
+                (_error) => {
                     // Ignore scan errors
                 }
             );

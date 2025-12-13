@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { OrderService, DeliveryService } from '../../services/neon';
 import { Link } from 'react-router-dom';
-import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaMapMarkerAlt, FaTools } from 'react-icons/fa';
+import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools } from 'react-icons/fa';
 
 interface Order {
     id: string;
