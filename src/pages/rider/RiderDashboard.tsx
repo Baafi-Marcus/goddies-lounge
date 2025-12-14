@@ -120,10 +120,10 @@ const RiderDashboard: React.FC = () => {
                                         <div>
                                             <p className="font-bold text-brand-dark">{delivery.location}</p>
                                             <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
-                                            <p className="text-sm text-gray-500 mt-1">Order Total: ₵{delivery.orderTotal.toFixed(2)}</p>
+                                            <p className="text-sm text-gray-500 mt-1">Order Total: ₵{Number(delivery.orderTotal || 0).toFixed(2)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-bold text-green-600">₵{delivery.riderEarning.toFixed(2)}</p>
+                                            <p className="text-lg font-bold text-green-600">₵{Number(delivery.riderEarning || 0).toFixed(2)}</p>
                                             <p className="text-xs text-gray-500">Your earning</p>
                                         </div>
                                     </div>
@@ -160,7 +160,7 @@ const RiderDashboard: React.FC = () => {
                                                 }`}>
                                                 {delivery.status}
                                             </span>
-                                            <p className="text-sm font-bold text-gray-700 mt-1">₵{delivery.riderEarning.toFixed(2)}</p>
+                                            <p className="text-sm font-bold text-gray-700 mt-1">₵{Number(delivery.riderEarning || 0).toFixed(2)}</p>
                                         </div>
                                     </div>
                                 </div>

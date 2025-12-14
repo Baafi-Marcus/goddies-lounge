@@ -64,7 +64,7 @@ const Checkout: React.FC = () => {
         }
     }, [cart, currentUser, loading, navigate]);
 
-    const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<CheckoutFormValues>({
+    const { register, handleSubmit, control, watch, setValue, trigger, formState: { errors } } = useForm<CheckoutFormValues>({
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
@@ -126,7 +126,9 @@ const Checkout: React.FC = () => {
                 totalAmount: totalAmount,
                 status: 'pending',
                 deliveryType: data.orderType,
-                deliveryAddress: data.orderType === 'delivery' ? data.address : `Pickup at ${data.pickupTime}`,
+                deliveryAddress: data.orderType === 'delivery'
+                    ? `${locations.find(l => l.id === data.locationId)?.name || ''} - ${data.address}`
+                    : `Pickup at ${data.pickupTime}`,
                 paymentMethod: data.paymentMethod
             };
 

@@ -179,7 +179,21 @@ const OrderTracking: React.FC = () => {
                                                     <span className="font-medium text-gray-600">₵{(item.price * item.quantity).toFixed(2)}</span>
                                                 </li>
                                             ))}
+
                                         </ul>
+
+                                        {/* Confirmation Code for User (Visible when In Transit or Assigned) */}
+                                        {isDelivery && ['assigned', 'in_transit'].includes(order.status) && order.delivery && order.delivery.customerConfirmationCode && (
+                                            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-xs text-yellow-800 font-bold uppercase mb-1">Your Confirmation Code</p>
+                                                    <p className="text-sm text-yellow-700">Give this to the rider to confirm delivery</p>
+                                                </div>
+                                                <div className="text-2xl font-mono font-bold text-brand-dark bg-white px-4 py-2 rounded-lg border border-yellow-100 shadow-sm">
+                                                    {order.delivery.customerConfirmationCode}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Rider / Pickup Info */}
@@ -224,7 +238,7 @@ const OrderTracking: React.FC = () => {
                     })}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

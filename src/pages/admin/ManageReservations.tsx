@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTable, type Table } from '../../context/TableContext';
 import { v4 as uuidv4 } from 'uuid';
-import { FaCheck, FaTimes, FaSearch, FaCalendarAlt, FaClock, FaUserFriends, FaChair } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaSearch, FaCalendarAlt, FaClock, FaUserFriends, FaChair, FaUndo, FaSave, FaTrash } from 'react-icons/fa';
 
 const ManageReservations: React.FC = () => {
     const { tables, addTable, updateTable, removeTable, saveLayout, resetLayout } = useTable();

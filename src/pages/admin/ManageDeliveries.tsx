@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useRider } from '../../context/RiderContext';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaQrcode, FaUserPlus } from 'react-icons/fa';
-import { QRCodeSVG } from 'qrcode.react';
-import { generateQRCodeData } from '../../utils/qrCodeGenerator';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaUserPlus } from 'react-icons/fa';
 
 const ManageDeliveries: React.FC = () => {
     const { deliveries, riders, assignDelivery } = useRider();
@@ -98,8 +96,8 @@ const ManageDeliveries: React.FC = () => {
                                             </span>
                                         </div>
                                         <div className="text-sm">
-                                            <p>Delivery Fee: <span className="font-bold text-green-600">₵{delivery.deliveryFee.toFixed(2)}</span></p>
-                                            <p className="text-xs text-gray-500">Rider Earning: ₵{delivery.riderEarning.toFixed(2)}</p>
+                                            <p>Delivery Fee: <span className="font-bold text-green-600">₵{Number(delivery.deliveryFee || 0).toFixed(2)}</span></p>
+                                            <p className="text-xs text-gray-500">Rider Earning: ₵{Number(delivery.riderEarning || 0).toFixed(2)}</p>
                                         </div>
                                     </div>
 
@@ -117,16 +115,6 @@ const ManageDeliveries: React.FC = () => {
                                 </div>
 
                                 <div className="flex flex-col gap-2 min-w-[150px]">
-                                    <button
-                                        onClick={() => {
-                                            setSelectedDelivery(delivery.id);
-                                            setShowQRModal(true);
-                                        }}
-                                        className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
-                                    >
-                                        <FaQrcode /> View QR
-                                    </button>
-
                                     {delivery.status === 'pending' && (
                                         <button
                                             onClick={() => setAssignModal(delivery.id)}
@@ -141,50 +129,6 @@ const ManageDeliveries: React.FC = () => {
                     ))
                 )}
             </div>
-
-            {/* QR Code Modal */}
-            {showQRModal && viewDelivery && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowQRModal(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-2xl font-bold mb-4 text-center text-brand-dark">Delivery QR Code</h3>
-
-                        <div className="bg-gray-50 p-6 rounded-xl mb-4">
-                            <div className="flex justify-center mb-4">
-                                <QRCodeSVG
-                                    value={generateQRCodeData(viewDelivery.id, viewDelivery.verificationCode)}
-                                    size={200}
-                                    level="H"
-                                />
-                            </div>
-                            <p className="text-center text-sm text-gray-600">
-                                Order #{viewDelivery.orderId}
-                            </p>
-                        </div>
-
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Verification Code:</span>
-                                <span className="font-mono font-bold">{viewDelivery.verificationCode}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Customer Code:</span>
-                                <span className="font-mono font-bold">{viewDelivery.customerConfirmationCode}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Location:</span>
-                                <span className="font-medium">{viewDelivery.location}</span>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => setShowQRModal(false)}
-                            className="w-full mt-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {/* Assign Rider Modal */}
             {assignModal && (

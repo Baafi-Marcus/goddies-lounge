@@ -47,17 +47,22 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, []);
 
     const loadData = async () => {
+        // Fetch Riders
         try {
-            const [fetchedRiders, fetchedDeliveries] = await Promise.all([
-                RiderService.getAllRiders(),
-                DeliveryService.getAllDeliveries()
-            ]);
-            // @ts-ignore - DB types might slightly mismatch UI types, simple cast for MVP
+            const fetchedRiders = await RiderService.getAllRiders();
+            // @ts-ignore
             setRiders(fetchedRiders);
+        } catch (error) {
+            console.error('Failed to load riders:', error);
+        }
+
+        // Fetch Deliveries
+        try {
+            const fetchedDeliveries = await DeliveryService.getAllDeliveries();
             // @ts-ignore
             setDeliveries(fetchedDeliveries);
         } catch (error) {
-            console.error('Failed to load data:', error);
+            console.error('Failed to load deliveries:', error);
         }
     };
 

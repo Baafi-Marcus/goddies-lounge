@@ -38,5 +38,5 @@ export const parseQRCodeData = (qrData: string): { deliveryId: string; verificat
  * Verify if a code matches the expected format (6 digits)
  */
 export const isValidCode = (code: string): boolean => {
-    return /^\d{6}$/.test(code);
+    return /^\d{4,6}$/.test(code);
 };

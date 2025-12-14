@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
     signInWithPopup,
     googleProvider,
@@ -11,7 +12,7 @@ import {
     linkWithCredential,
     EmailAuthProvider
 } from '../../services/firebase';
-import { FaEnvelope, FaLock, FaGoogle, FaUser, FaPhone } from 'react-icons/fa';
+import { FaLock, FaGoogle, FaUser, FaPhone } from 'react-icons/fa';
 import logo from '../../assets/logo.jpg';
 import { UserService } from '../../services/neon';
 
@@ -26,7 +27,15 @@ declare global {
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { currentUser } = useAuth();
     const from = location.state?.from?.pathname || '/user/menu';
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (currentUser) {
+            navigate(from, { replace: true });
+        }
+    }, [currentUser, navigate, from]);
 
     // State
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -222,15 +231,15 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-white/10">
+                <div className="flex gap-2 border-b border-white/10">
                     <button
-                        className={`flex - 1 py - 4 text - sm font - bold uppercase tracking - wider transition - colors ${activeTab === 'login' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
+                        className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors rounded-t-xl ${activeTab === 'login' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
                         onClick={() => setActiveTab('login')}
                     >
                         Login
                     </button>
                     <button
-                        className={`flex - 1 py - 4 text - sm font - bold uppercase tracking - wider transition - colors ${activeTab === 'register' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
+                        className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors rounded-t-xl ${activeTab === 'register' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
                         onClick={() => setActiveTab('register')}
                     >
                         Register

@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRider } from '../../context/RiderContext';
 import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaPhone, FaBox } from 'react-icons/fa';
-import { isValidCode } from '../../utils/qrCodeGenerator';
+import { isValidCode, generateQRCodeData } from '../../utils/qrCodeGenerator';
+import { QRCodeSVG } from 'qrcode.react';
 
 const ActiveDelivery: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { currentRider, deliveries, completeDelivery } = useRider();
-    const [customerCode, setCustomerCode] = useState('');
+    const { currentRider, deliveries, completeDelivery, pickupDelivery } = useRider();
+    const [inputCode, setInputCode] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     React.useEffect(() => {
         if (!currentRider) {
@@ -39,16 +41,38 @@ const ActiveDelivery: React.FC = () => {
         );
     }
 
-    const handleCompleteDelivery = async (e: React.FormEvent) => {
+    const handlePickup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
-        if (!isValidCode(customerCode)) {
-            setError('Customer code must be 6 digits');
+        if (!isValidCode(inputCode)) {
+            setError('Verification code must be 6 digits');
+            setLoading(false);
             return;
         }
 
-        const successResult = await completeDelivery(delivery.id, customerCode);
+        const successResult = await pickupDelivery(delivery.id, inputCode);
+        if (successResult) {
+            setInputCode(''); // Clear input for next step
+        } else {
+            setError('Invalid verification code. Please check with the restaurant.');
+        }
+        setLoading(false);
+    };
+
+    const handleCompleteDelivery = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        if (!isValidCode(inputCode)) {
+            setError('Customer code must be 6 digits');
+            setLoading(false);
+            return;
+        }
+
+        const successResult = await completeDelivery(delivery.id, inputCode);
         if (successResult) {
             setSuccess(true);
             setTimeout(() => {
@@ -57,6 +81,7 @@ const ActiveDelivery: React.FC = () => {
         } else {
             setError('Invalid customer confirmation code. Please ask the customer for the correct code.');
         }
+        setLoading(false);
     };
 
     if (success) {
@@ -68,7 +93,7 @@ const ActiveDelivery: React.FC = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-brand-dark mb-2">Delivery Completed!</h2>
                     <p className="text-gray-600 mb-2">Your earnings have been updated</p>
-                    <p className="text-2xl font-bold text-green-600">+₵{delivery.riderEarning.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">+₵{Number(delivery.riderEarning || 0).toFixed(2)}</p>
                     <p className="text-sm text-gray-500 mt-4">Redirecting to dashboard...</p>
                 </div>
             </div>
@@ -79,9 +104,17 @@ const ActiveDelivery: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-brand-dark text-white p-6 shadow-lg">
-                <div className="max-w-4xl mx-auto">
-                    <h1 className="text-2xl font-heading font-bold">Active Delivery</h1>
-                    <p className="text-brand-yellow text-sm">Order #{delivery.orderId}</p>
+                <div className="max-w-4xl mx-auto flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-heading font-bold">Active Delivery</h1>
+                        <p className="text-brand-yellow text-sm">Order #{delivery.orderId}</p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/rider/dashboard')}
+                        className="text-sm bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/20"
+                    >
+                        &larr; Back
+                    </button>
                 </div>
             </div>
 
@@ -95,7 +128,7 @@ const ActiveDelivery: React.FC = () => {
                         </div>
                         <div className="text-right">
                             <p className="text-sm opacity-90">Your Earning</p>
-                            <p className="text-2xl font-bold">₵{delivery.riderEarning.toFixed(2)}</p>
+                            <p className="text-2xl font-bold">₵{Number(delivery.riderEarning || 0).toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -141,24 +174,70 @@ const ActiveDelivery: React.FC = () => {
                     <div className="space-y-2">
                         <div className="flex justify-between">
                             <span className="text-gray-600">Order Total</span>
-                            <span className="font-bold">₵{delivery.orderTotal.toFixed(2)}</span>
+                            <span className="font-bold">₵{Number(delivery.orderTotal || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">Delivery Fee</span>
-                            <span className="font-bold">₵{delivery.deliveryFee.toFixed(2)}</span>
+                            <span className="font-bold">₵{Number(delivery.deliveryFee || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Commission</span>
-                            <span className="text-gray-500">-₵{delivery.commission.toFixed(2)}</span>
+                            <span className="text-gray-500">-₵{Number(delivery.commissionAmount || 0).toFixed(2)}</span>
                         </div>
                         <div className="border-t pt-2 flex justify-between">
                             <span className="font-bold text-brand-dark">Your Earning</span>
-                            <span className="font-bold text-green-600">₵{delivery.riderEarning.toFixed(2)}</span>
+                            <span className="font-bold text-green-600">₵{Number(delivery.riderEarning || 0).toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Customer Confirmation */}
+                {/* Pickup Order (Status: Assigned) */}
+                {delivery.status === 'assigned' && (
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                        <h2 className="text-xl font-bold mb-4 text-brand-dark">Pickup Order</h2>
+
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-center gap-3">
+                                <FaTimesCircle className="text-red-600 text-xl flex-shrink-0" />
+                                <p className="text-red-600 font-medium">{error}</p>
+                            </div>
+                        )}
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <p className="text-blue-800 text-sm">
+                                <strong>Instructions:</strong> Arrive at the restaurant. They will give you a 6-digit Verification Code to confirm pickup.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handlePickup} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Restaurant Verification Code
+                                </label>
+                                <input
+                                    type="text"
+                                    value={inputCode}
+                                    onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none text-center text-2xl font-bold tracking-widest"
+                                    placeholder="000000"
+                                    maxLength={6}
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-blue-400"
+                            >
+                                <FaBox /> Confirm Pickup
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Complete Delivery (Status: In Transit) */}
                 {delivery.status === 'in_transit' && (
                     <div className="bg-white rounded-xl shadow-sm p-6">
                         <h2 className="text-xl font-bold mb-4 text-brand-dark">Complete Delivery</h2>
@@ -172,8 +251,27 @@ const ActiveDelivery: React.FC = () => {
 
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                             <p className="text-yellow-800 text-sm">
-                                <strong>Important:</strong> Ask the customer for their 6-digit confirmation code before marking this delivery as complete.
+                                <strong>Important:</strong> Show this QR Code to the customer to scan, OR ask for their 6-digit confirmation code.
                             </p>
+                        </div>
+
+                        {/* Rider QR Code Display */}
+                        <div className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl mb-6 shadow-sm">
+                            <div className="bg-white p-2 rounded-lg">
+                                <QRCodeSVG
+                                    value={generateQRCodeData(delivery.id, delivery.customerConfirmationCode)}
+                                    size={180}
+                                    level="H"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2 font-mono">Scan to Verify</p>
+                            <p className="text-xs text-brand-dark font-bold mt-1 text-center">Order #{delivery.orderId}</p>
+                        </div>
+
+                        <div className="relative flex py-2 items-center mb-4">
+                            <div className="flex-grow border-t border-gray-300"></div>
+                            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR Enter Code</span>
+                            <div className="flex-grow border-t border-gray-300"></div>
                         </div>
 
                         <form onSubmit={handleCompleteDelivery} className="space-y-4">
@@ -183,12 +281,13 @@ const ActiveDelivery: React.FC = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    value={customerCode}
-                                    onChange={(e) => setCustomerCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    value={inputCode}
+                                    onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-center text-2xl font-bold tracking-widest"
                                     placeholder="000000"
                                     maxLength={6}
                                     required
+                                    disabled={loading}
                                 />
                                 <p className="text-xs text-gray-500 mt-2 text-center">
                                     The customer received this code when they placed their order
@@ -197,7 +296,8 @@ const ActiveDelivery: React.FC = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                disabled={loading}
+                                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:bg-green-400"
                             >
                                 <FaCheckCircle /> Mark as Delivered
                             </button>
@@ -210,7 +310,7 @@ const ActiveDelivery: React.FC = () => {
                         <FaCheckCircle className="text-green-600 text-4xl mx-auto mb-3" />
                         <p className="text-green-700 font-bold text-lg">Delivery Completed!</p>
                         <p className="text-green-600 text-sm mt-2">
-                            Delivered at {new Date(delivery.deliveryTime!).toLocaleString()}
+                            Delivered at {new Date(delivery.deliveredAt!).toLocaleString()}
                         </p>
                     </div>
                 )}
