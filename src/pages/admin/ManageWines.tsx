@@ -81,16 +81,50 @@ const ManageWines: React.FC = () => {
         }
     };
 
+    const handleSyncImages = async () => {
+        if (!window.confirm("This will update all wine/drink images from the local wineData file. Continue?")) return;
+        setLoading(true);
+        try {
+            // Import local data
+            const { wineData } = await import('../../data/wineData');
+            let count = 0;
+            for (const localItem of wineData) {
+                const allDbItems = await MenuService.getAllItems();
+                const match = allDbItems.find((dbItem: any) => dbItem.name === localItem.name);
+
+                if (match) {
+                    await MenuService.updateItem(match.id, { image: localItem.image });
+                    count++;
+                }
+            }
+            alert(`Updated images for ${count} items.`);
+            loadItems();
+        } catch (e) {
+            console.error("Sync failed", e);
+            alert("Sync failed. Check console.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <h1 className="text-3xl font-heading font-bold text-brand-dark">Manage Wines & Drinks</h1>
-                <button
-                    onClick={handleAddNew}
-                    className="btn-primary flex items-center gap-2"
-                >
-                    <FaPlus /> Add New Item
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleSyncImages}
+                        className="btn-secondary flex items-center gap-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    >
+                        <FaEdit /> Sync Images
+                    </button>
+                    <button
+                        onClick={handleAddNew}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <FaPlus /> Add New Item
+                    </button>
+                </div>
             </div>
 
             {/* Search */}

@@ -130,28 +130,34 @@ export const DeliveryService = {
     // Transaction-like atomic update
     await sql`BEGIN`;
     try {
-      // 1. Update Delivery
-      await sql`
-        UPDATE deliveries 
-        SET status = 'delivered', delivered_at = NOW() 
-        WHERE id = ${deliveryId}
-    `;
+      // 1. Get Order ID first to ensure we target the right row
+      const deliveryResult = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
+      if (deliveryResult && deliveryResult.length > 0) {
+        const orderId = deliveryResult[0].order_id;
 
-      // 2. Update Rider Stats
-      await sql`
-        UPDATE riders 
-        SET total_deliveries = total_deliveries + 1,
-      total_earnings = total_earnings + ${earning},
-    current_balance = current_balance + ${earning}
-        WHERE id = ${riderId}
-    `;
+        // 2. Update Delivery
+        await sql`
+            UPDATE deliveries 
+            SET status = 'delivered', delivered_at = NOW() 
+            WHERE id = ${deliveryId}
+          `;
 
-      // 3. Update Order Status
-      await sql`
-        UPDATE orders
-        SET status = 'delivered'
-        WHERE id = (SELECT order_id FROM deliveries WHERE id = ${deliveryId})
-      `;
+        // 3. Update Rider Stats
+        await sql`
+            UPDATE riders 
+            SET total_deliveries = total_deliveries + 1,
+            total_earnings = total_earnings + ${earning},
+            current_balance = current_balance + ${earning}
+            WHERE id = ${riderId}
+          `;
+
+        // 4. Update Order Status (Explicit Cast)
+        await sql`
+            UPDATE orders
+            SET status = 'delivered'
+            WHERE id::text = ${orderId}::text
+          `;
+      }
 
       await sql`COMMIT`;
       return true;

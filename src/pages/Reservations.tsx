@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import { FaUserFriends, FaCheckCircle, FaChair } from 'react-icons/fa';
 import { useTable, type Table } from '../context/TableContext';
 import ScrollTimePicker from '../components/ScrollTimePicker';
+import { ReservationService } from '../services/neon';
 
 const schema = yup.object({
     name: yup.string().required('Name is required'),
@@ -33,8 +34,6 @@ const Reservations: React.FC = () => {
         setValue('tableId', table.id);
         setValue('guests', table.seats); // Auto-fill guests based on table size
     };
-
-    import { ReservationService } from '../services/neon';
 
     // ...
 

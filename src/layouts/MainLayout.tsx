@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FaShoppingCart, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp, FaUser } from 'react-icons/fa';
+import { FaShoppingCart, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp, FaUser, FaCalendarAlt } from 'react-icons/fa';
 import { MdRestaurantMenu } from 'react-icons/md';
 import logo from '../assets/logo.jpg';
 import { useCart } from '../context/CartContext';
@@ -22,6 +22,7 @@ const MainLayout: React.FC = () => {
 
     const userLinks = [
         { name: 'Menu', path: '/user/menu', icon: <MdRestaurantMenu /> },
+        { name: 'Reservations', path: '/user/reservations', icon: <FaCalendarAlt /> },
         { name: 'Orders', path: '/user/orders', icon: <FaUtensils /> },
         { name: 'Profile', path: '/user/profile', icon: <FaUser /> },
         { name: 'My Cart', path: '/user/cart', icon: <FaShoppingCart /> },

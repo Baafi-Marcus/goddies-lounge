@@ -11,6 +11,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderTracking from './pages/user/OrderTracking';
 import UserProfile from './pages/user/UserProfile';
+import Reservations from './pages/Reservations';
 
 
 
@@ -63,6 +64,7 @@ const App: React.FC = () => {
                   <Route path="cart" element={<Cart />} />
                   <Route path="checkout" element={<Checkout />} />
                   <Route path="orders" element={<OrderTracking />} />
+                  <Route path="reservations" element={<Reservations />} />
                   <Route path="profile" element={<UserProfile />} />
                 </Route>
 

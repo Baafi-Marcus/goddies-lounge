@@ -81,16 +81,55 @@ const ManageMenu: React.FC = () => {
         }
     };
 
+    const handleSyncImages = async () => {
+        if (!window.confirm("This will update all menu item images from the local data file. Continue?")) return;
+        setLoading(true);
+        try {
+            // Import local data
+            const { menuData } = await import('../../data/menuData');
+            let count = 0;
+            for (const localItem of menuData) {
+                // Find matching item in DB by name (since IDs might differ if re-seeded)
+                // Actually, let's try to match by name or update if ID matches.
+                // Simpler: Just search DB items by name?
+                // We have 'items' state... but that might be partial.
+                // Let's rely on name matching for now since that's stable.
+                const allDbItems = await MenuService.getAllItems();
+                const match = allDbItems.find((dbItem: any) => dbItem.name === localItem.name);
+
+                if (match) {
+                    await MenuService.updateItem(match.id, { image: localItem.image });
+                    count++;
+                }
+            }
+            alert(`Updated images for ${count} items.`);
+            loadItems();
+        } catch (e) {
+            console.error("Sync failed", e);
+            alert("Sync failed. Check console.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <h1 className="text-3xl font-heading font-bold text-brand-dark">Manage Menu</h1>
-                <button
-                    onClick={handleAddNew}
-                    className="btn-primary flex items-center gap-2"
-                >
-                    <FaPlus /> Add New Item
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleSyncImages}
+                        className="btn-secondary flex items-center gap-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    >
+                        <FaEdit /> Sync Images
+                    </button>
+                    <button
+                        onClick={handleAddNew}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <FaPlus /> Add New Item
+                    </button>
+                </div>
             </div>
 
             {/* Search */}
