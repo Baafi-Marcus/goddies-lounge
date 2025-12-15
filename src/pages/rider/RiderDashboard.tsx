@@ -19,7 +19,7 @@ const RiderDashboard: React.FC = () => {
     const availableDeliveries = deliveries.filter(d => d.status === 'pending' && !d.riderId);
     const completedToday = myDeliveries.filter(d =>
         d.status === 'delivered' &&
-        new Date(d.deliveryTime || '').toDateString() === new Date().toDateString()
+        new Date(d.deliveredAt || '').toDateString() === new Date().toDateString()
     );
 
     const handleLogout = () => {

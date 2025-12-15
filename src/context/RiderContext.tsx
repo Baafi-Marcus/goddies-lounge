@@ -66,13 +66,26 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     };
 
+    // Sync currentRider with updated riders list to keep stats fresh
+    useEffect(() => {
+        if (currentRider && riders.length > 0) {
+            const updatedRider = riders.find(r => r.id === currentRider.id);
+            if (updatedRider) {
+                // Only update if data actually changed to avoid loop (deep check or simple JSON stringify)
+                if (JSON.stringify(updatedRider) !== JSON.stringify(currentRider)) {
+                    setCurrentRider(updatedRider);
+                    localStorage.setItem('currentRider', JSON.stringify(updatedRider));
+                }
+            }
+        }
+    }, [riders, currentRider]);
+
     // Tracking Active Delivery
     useEffect(() => {
         if (currentRider) {
             // Find active delivery from fetched deliveries
             const active = deliveries.find(d => d.riderId === currentRider.id && (d.status === 'assigned' || d.status === 'in_transit'));
             setActiveDelivery(active || null);
-            localStorage.setItem('currentRider', JSON.stringify(currentRider));
 
             // Sync location to Firebase if in transit (Mocking GPS for now)
             if (active && active.status === 'in_transit') {
@@ -153,8 +166,27 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const delivery = deliveries.find(d => d.id === deliveryId);
         if (delivery && delivery.customerConfirmationCode === customerCode) {
             const earning = delivery.riderEarning;
+            // 1. Call API to complete delivery
             await DeliveryService.completeDelivery(deliveryId, delivery.riderId!, earning);
-            await loadData();
+
+            // 2. Optimistic Update (Immediate UI feedback)
+            if (currentRider) {
+                const updatedRider = {
+                    ...currentRider,
+                    totalDeliveries: (currentRider.totalDeliveries || 0) + 1,
+                    totalEarnings: (Number(currentRider.totalEarnings) || 0) + Number(earning),
+                    currentBalance: (Number(currentRider.currentBalance) || 0) + Number(earning)
+                };
+                setCurrentRider(updatedRider);
+                // Update the riders list locally too
+                setRiders(prev => prev.map(r => r.id === updatedRider.id ? updatedRider : r));
+            }
+
+            // 3. Clear active delivery
+            setActiveDelivery(null);
+
+            // 4. Force a fresh fetch to be sure
+            setTimeout(loadData, 1000); // Small delay to allow DB propagation
             return true;
         }
         return false;

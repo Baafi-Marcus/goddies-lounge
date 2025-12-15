@@ -31,19 +31,35 @@ export const useTable = () => {
     return context;
 };
 
+import { TableService } from '../services/neon';
+
+// ... (existing interface definitions)
+
 export const TableProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [tables, setTables] = useState<Table[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Load from local storage on mount
+    // Load from DB on mount
     useEffect(() => {
-        const savedTables = localStorage.getItem('goddies_table_layout');
-        if (savedTables) {
+        const loadTables = async () => {
             try {
-                setTables(JSON.parse(savedTables));
+                const data = await TableService.getLayout();
+                // Map properties if needed (DB columns are snake_case? No, neon output usually automatic if matches, but let's be safe or strict)
+                // My neon service uses exact column names in insert, SELECT * returns them as is. 
+                // Need to ensure casing matches. `getLayout` returns `restaurant_tables`.
+                // Actually my neon setup returns whatever the DB has.
+                // Wait, in `neon.ts` I didn't alias columns in `getLayout`.
+                // Let's check `neon.ts` `ensureTableExists`: columns are snake_case? No, `x`, `y`, `width` are standard. `label`, `type`.
+                // They are lowercase. TypeScript Table interface uses lowercase.
+                // So it should match. `id`, `x`, `y`, `width`, `height`, `shape`, `seats`, `label`, `type`.
+                setTables(data as Table[]);
             } catch (e) {
-                console.error('Failed to parse table layout', e);
+                console.error('Failed to load table layout', e);
+            } finally {
+                setLoading(false);
             }
-        }
+        };
+        loadTables();
     }, []);
 
     const addTable = (table: Table) => {
@@ -60,15 +76,24 @@ export const TableProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setTables((prev) => prev.filter((t) => t.id !== id));
     };
 
-    const saveLayout = () => {
-        localStorage.setItem('goddies_table_layout', JSON.stringify(tables));
-        alert('Layout saved successfully!');
+    const saveLayout = async () => {
+        try {
+            await TableService.saveLayout(tables);
+            alert('Layout saved to database successfully!');
+        } catch (e) {
+            console.error('Failed to save layout', e);
+            alert('Failed to save layout. Please try again.');
+        }
     };
 
-    const resetLayout = () => {
+    const resetLayout = async () => {
         if (window.confirm('Are you sure you want to clear the layout?')) {
             setTables([]);
-            localStorage.removeItem('goddies_table_layout');
+            try {
+                await TableService.saveLayout([]);
+            } catch (e) {
+                console.error('Failed to clear layout', e);
+            }
         }
     };
 

@@ -34,14 +34,20 @@ const Reservations: React.FC = () => {
         setValue('guests', table.seats); // Auto-fill guests based on table size
     };
 
-    const onSubmit: import('react-hook-form').SubmitHandler<ReservationFormValues> = (data) => {
-        console.log(data);
-        // Simulate API call
-        setTimeout(() => {
+    import { ReservationService } from '../services/neon';
+
+    // ...
+
+    const onSubmit: import('react-hook-form').SubmitHandler<ReservationFormValues> = async (data) => {
+        try {
+            await ReservationService.createReservation(data);
             setIsSubmitted(true);
             reset();
             setSelectedTable(null);
-        }, 1000);
+        } catch (error) {
+            console.error('Failed to make reservation', error);
+            alert('Failed to make reservation. Please try again.');
+        }
     };
 
     if (isSubmitted) {

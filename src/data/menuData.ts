@@ -1,11 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import shawarmaChicken from '../assets/shawarma-chicken.jpg';
-import shawarmaBeef from '../assets/shawarma-beef.jpg';
-import jollofRice from '../assets/jollof-rice.jpg';
-import assortedJollof from '../assets/assorted-jollof.jpg';
-import friedRice from '../assets/fried-rice.jpg';
-import assortedFriedRice from '../assets/assorted-fried-rice.jpg';
-import chickenBurger from '../assets/chicken-burger.jpg';
 
 export interface MenuItem {
     id: string;
@@ -63,7 +56,7 @@ export const menuData: MenuItem[] = [
         description: 'Crispy chicken fillet with mayo and pickles.',
         price: 60.00,
         category: 'Burger',
-        image: chickenBurger,
+        image: '/images/chicken-burger.jpg',
         available: true
     },
 
@@ -74,7 +67,7 @@ export const menuData: MenuItem[] = [
         description: 'Grilled chicken strips with veggies and garlic sauce in a wrap.',
         price: 45.00,
         category: 'Shawarma',
-        image: shawarmaChicken,
+        image: '/images/shawarma-chicken.jpg',
         available: true
     },
     {
@@ -83,7 +76,7 @@ export const menuData: MenuItem[] = [
         description: 'Tender beef strips with tahini and veggies.',
         price: 50.00,
         category: 'Shawarma',
-        image: shawarmaBeef,
+        image: '/images/shawarma-beef.jpg',
         available: true
     },
 
@@ -114,7 +107,7 @@ export const menuData: MenuItem[] = [
         description: 'Spicy Ghanaian Jollof rice served with grilled chicken and coleslaw.',
         price: 60.00,
         category: 'Rice',
-        image: jollofRice,
+        image: '/images/jollof-rice.jpg',
         available: true
     },
     {
@@ -123,7 +116,7 @@ export const menuData: MenuItem[] = [
         description: 'Classic fried rice with veggies, egg, and crispy chicken.',
         price: 55.00,
         category: 'Rice',
-        image: friedRice,
+        image: '/images/fried-rice.jpg',
         available: true
     },
 
@@ -134,7 +127,7 @@ export const menuData: MenuItem[] = [
         description: 'Jollof rice mixed with beef, chicken, and sausages.',
         price: 85.00,
         category: 'Assorted',
-        image: assortedJollof,
+        image: '/images/assorted-jollof.jpg',
         available: true
     },
     {
@@ -143,7 +136,7 @@ export const menuData: MenuItem[] = [
         description: 'Fried rice loaded with shrimp, beef, and chicken.',
         price: 80.00,
         category: 'Assorted',
-        image: assortedFriedRice,
+        image: '/images/assorted-fried-rice.jpg',
         available: true
     },
     {

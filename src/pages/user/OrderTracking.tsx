@@ -22,8 +22,8 @@ const OrderTracking: React.FC = () => {
     useEffect(() => {
         if (!authLoading && userProfile?.id) {
             fetchOrders();
-            // Poll every 30 seconds for status updates
-            const interval = setInterval(fetchOrders, 30000);
+            // Poll every 5 seconds for status updates (faster for mobile users)
+            const interval = setInterval(fetchOrders, 5000);
             return () => clearInterval(interval);
         } else if (!authLoading && !userProfile) {
             setLoading(false);

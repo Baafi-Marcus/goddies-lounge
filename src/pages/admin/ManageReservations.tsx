@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTable, type Table } from '../../context/TableContext';
 import { v4 as uuidv4 } from 'uuid';
-import { FaCheck, FaTimes, FaSearch, FaCalendarAlt, FaClock, FaUserFriends, FaChair, FaUndo, FaSave, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaSave, FaTrash, FaUndo } from 'react-icons/fa';
 
 const ManageReservations: React.FC = () => {
     const { tables, addTable, updateTable, removeTable, saveLayout, resetLayout } = useTable();
@@ -9,6 +9,21 @@ const ManageReservations: React.FC = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const canvasRef = useRef<HTMLDivElement>(null);
+    const [reservations, setReservations] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetchReservations();
+    }, []);
+
+    const fetchReservations = async () => {
+        try {
+            const { ReservationService } = await import('../../services/neon');
+            const data = await ReservationService.getAllReservations();
+            setReservations(data);
+        } catch (error) {
+            console.error("Failed to fetch reservations", error);
+        }
+    };
 
     // Table Templates
     const tableTemplates = [
@@ -191,7 +206,67 @@ const ManageReservations: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+
+            {/* Reservations List */}
+            <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-800">Recent Reservations</h2>
+                    <button onClick={() => fetchReservations()} className="text-brand-red hover:text-red-700 text-sm font-medium">
+                        Refresh List
+                    </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 text-gray-600 text-xs uppercase font-bold">
+                            <tr>
+                                <th className="px-4 py-3">Customer</th>
+                                <th className="px-4 py-3">Date & Time</th>
+                                <th className="px-4 py-3">Table</th>
+                                <th className="px-4 py-3">Guests</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {reservations.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                                        No reservations found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                reservations.map((res: any) => (
+                                    <tr key={res.id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3">
+                                            <div className="font-medium text-gray-800">{res.name}</div>
+                                            <div className="text-xs text-gray-500">{res.email}</div>
+                                            <div className="text-xs text-gray-500">{res.phone}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <div>{res.date}</div>
+                                            <div className="text-gray-500">{res.time}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-medium text-brand-blue">
+                                            {res.tableName || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">{res.guests}</td>
+                                        <td className="px-4 py-3">
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                {res.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                                            {res.notes || '-'}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div >
     );
 };
 

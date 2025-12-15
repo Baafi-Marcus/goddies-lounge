@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync } from 'react-icons/fa';
 import { generateVerificationCode, generateCustomerConfirmationCode } from '../../utils/qrCodeGenerator';
 import { OrderService, RiderService, DeliveryService } from '../../services/neon';
+import { locations } from '../../data/locations';
+
+interface OrderItem {
+    id?: string;
+    name: string;
+    quantity: number;
+    price: number;
+}
 
 interface Order {
     id: string;
@@ -9,10 +17,21 @@ interface Order {
     total_amount: number;
     status: string;
     created_at: string;
-    items: any; // JSONB
+    items: OrderItem[];
     delivery_type: 'delivery' | 'pickup';
     user_id?: string;
     delivery_address?: string;
+    verification_code?: string;
+    confirmation_code?: string;
+}
+
+interface Rider {
+    id: string;
+    name: string;
+    phone?: string;
+    status: string;
+    registrationNumber: string;
+    vehicleType: string;
 }
 
 const ManageOrders: React.FC = () => {
@@ -21,7 +40,7 @@ const ManageOrders: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState('All');
 
     // Rider Assignment State
-    const [riders, setRiders] = useState<any[]>([]);
+    const [riders, setRiders] = useState<Rider[]>([]);
     const [assignModalOpen, setAssignModalOpen] = useState<string | null>(null); // orderId
     const [isAssigning, setIsAssigning] = useState(false);
 
@@ -46,7 +65,7 @@ const ManageOrders: React.FC = () => {
     const fetchRiders = async () => {
         try {
             const data = await RiderService.getAllRiders();
-            const active = data.filter((r: any) => r.status === 'active');
+            const active = (data as Rider[]).filter((r) => r.status === 'active');
             setRiders(active);
         } catch (error) {
             console.error("Failed to fetch riders", error);
@@ -73,16 +92,28 @@ const ManageOrders: React.FC = () => {
             const order = orders.find(o => o.id === orderId);
             if (!order) return;
 
+            // 1. Calculate Dynamic Delivery Fee
+            // Strategy: Check if address contains any known location name
+            let deliveryFee = 15.00; // Default fallback
+            if (order.delivery_address) {
+                const foundLocation = locations.find(loc =>
+                    order.delivery_address!.toLowerCase().includes(loc.name.toLowerCase())
+                );
+                if (foundLocation) {
+                    deliveryFee = foundLocation.price;
+                }
+            }
+
             // 1. Create Delivery Record
             const deliveryData = {
                 orderId: order.id,
                 customerId: order.user_id,
                 pickupLocation: 'Goodies Lounge, Accra',
                 deliveryLocation: order.delivery_address || 'Unknown Address',
-                deliveryFee: 15.00, // Standard Fee
+                deliveryFee: deliveryFee,
                 commissionRate: 0.1,
-                commissionAmount: 1.50,
-                riderEarning: 13.50,
+                commissionAmount: deliveryFee * 0.1,
+                riderEarning: deliveryFee * 0.9,
                 verificationCode: generateVerificationCode(),
                 confirmationCode: generateCustomerConfirmationCode()
             };
@@ -128,7 +159,16 @@ const ManageOrders: React.FC = () => {
 
     return (
         <div>
-            <h1 className="text-3xl font-heading font-bold mb-8 text-brand-dark">Manage Orders</h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-heading font-bold text-brand-dark">Manage Orders</h1>
+                <button
+                    onClick={fetchOrders}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                    disabled={loading}
+                >
+                    <FaSync className={`${loading ? 'animate-spin' : ''}`} /> Refresh
+                </button>
+            </div>
 
             {/* Filters */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -240,6 +280,25 @@ const ManageOrders: React.FC = () => {
                                         Cancel
                                     </button>
                                 )}
+
+                                {/* Codes Display for Admin */}
+                                {['assigned', 'in_transit', 'delivered'].includes(order.status.toLowerCase()) && (
+                                    <div className="mt-2 space-y-1">
+                                        {/* Rider Code - Visible once assigned */}
+                                        {order.verification_code && !['delivered'].includes(order.status.toLowerCase()) && (
+                                            <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-100 text-yellow-800">
+                                                <span className="font-bold">Rider Code:</span> {order.verification_code}
+                                            </div>
+                                        )}
+
+                                        {/* Customer Code - Visible ONLY after delivered per user request */}
+                                        {order.status.toLowerCase() === 'delivered' && order.confirmation_code && (
+                                            <div className="text-xs bg-green-50 p-2 rounded border border-green-100 text-green-800">
+                                                <span className="font-bold">Confirmation Code:</span> {order.confirmation_code}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )
@@ -247,49 +306,51 @@ const ManageOrders: React.FC = () => {
             </div>
 
             {/* Rider Assign Modal */}
-            {assignModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setAssignModalOpen(null)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-2xl font-bold mb-4 text-brand-dark">Select a Rider</h3>
-                        <p className="text-gray-500 text-sm mb-4">Assign a rider to this delivery.</p>
+            {
+                assignModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setAssignModalOpen(null)}>
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="text-2xl font-bold mb-4 text-brand-dark">Select a Rider</h3>
+                            <p className="text-gray-500 text-sm mb-4">Assign a rider to this delivery.</p>
 
-                        {riders.length === 0 ? (
-                            <div className="text-center py-6">
-                                <p className="text-red-500 font-medium">No active riders found</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3 max-h-80 overflow-y-auto">
-                                {riders.map((rider) => (
-                                    <button
-                                        key={rider.id}
-                                        disabled={isAssigning}
-                                        onClick={() => handleAssignRider(assignModalOpen, rider.id)}
-                                        className="w-full text-left p-4 rounded-xl border hover:border-brand-yellow hover:bg-yellow-50 transition-all flex justify-between items-center group"
-                                    >
-                                        <div>
-                                            <p className="font-bold text-gray-800 group-hover:text-brand-dark">{rider.name}</p>
-                                            <p className="text-xs text-gray-500">{rider.phone}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                            {riders.length === 0 ? (
+                                <div className="text-center py-6">
+                                    <p className="text-red-500 font-medium">No active riders found</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 max-h-80 overflow-y-auto">
+                                    {riders.map((rider) => (
+                                        <button
+                                            key={rider.id}
+                                            disabled={isAssigning}
+                                            onClick={() => handleAssignRider(assignModalOpen, rider.id)}
+                                            className="w-full text-left p-4 rounded-xl border hover:border-brand-yellow hover:bg-yellow-50 transition-all flex justify-between items-center group"
+                                        >
+                                            <div>
+                                                <p className="font-bold text-gray-800 group-hover:text-brand-dark">{rider.name}</p>
+                                                <p className="text-xs text-gray-500">{rider.phone}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
-                        <div className="mt-6">
-                            <button
-                                onClick={() => setAssignModalOpen(null)}
-                                className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
-                            >
-                                Cancel
-                            </button>
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => setAssignModalOpen(null)}
+                                    className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

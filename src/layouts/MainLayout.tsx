@@ -74,11 +74,7 @@ const MainLayout: React.FC = () => {
                         )}
                         {currentUser ? (
                             <div className="flex items-center gap-2 text-sm font-medium">
-                                {!isHome && (
-                                    <Link to="/user/profile" className={`hover:text-brand-yellow ${isTransparent ? 'text-white' : 'text-brand-dark'}`}>
-                                        Hi, {userProfile?.full_name || currentUser.displayName || 'User'}
-                                    </Link>
-                                )}
+                                {/* "Hi, User" redundant link removed */}
                             </div>
                         ) : (
                             <Link to="/login" className={`text-sm font-bold ${isTransparent ? 'text-white' : 'text-brand-dark'} hover:text-brand-yellow`}>

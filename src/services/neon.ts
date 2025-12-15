@@ -351,9 +351,15 @@ export const OrderService = {
     try {
       // Join with users to get customer name
       return await sql`
-        SELECT o.*, u.full_name as customer_name, u.phone as customer_phone
+        SELECT 
+          o.*, 
+          u.full_name as customer_name, 
+          u.phone as customer_phone,
+          d.verification_code,
+          d.confirmation_code
         FROM orders o
-        LEFT JOIN users u ON o.user_id = u.id
+        LEFT JOIN users u ON o.user_id::text = u.id::text
+        LEFT JOIN deliveries d ON o.id::text = d.order_id::text
         ORDER BY o.created_at DESC
       `;
     } catch (e: any) {
@@ -367,5 +373,120 @@ export const OrderService = {
 
   async updateOrderStatus(orderId: string, status: string) {
     await sql`UPDATE orders SET status = ${status} WHERE id = ${orderId} `;
+  }
+};
+
+export const TableService = {
+  async ensureTableExists() {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS restaurant_tables (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          label VARCHAR(50) NOT NULL,
+          x INTEGER NOT NULL,
+          y INTEGER NOT NULL,
+          width INTEGER NOT NULL,
+          height INTEGER NOT NULL,
+          seats INTEGER NOT NULL,
+          shape VARCHAR(20) NOT NULL,
+          type VARCHAR(50) NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+    } catch (e: any) {
+      // Ignore unique constraint violation on type/index creation race conditions
+      if (!e.message.includes('pg_type_typname_nsp_index')) {
+        throw e;
+      }
+    }
+  },
+
+  async getLayout() {
+    try {
+      const results = await sql`SELECT * FROM restaurant_tables`;
+      return results.map(row => ({
+        id: row.id,
+        label: row.label,
+        x: row.x,
+        y: row.y,
+        width: row.width,
+        height: row.height,
+        seats: row.seats,
+        shape: row.shape,
+        type: row.type
+      }));
+    } catch (e: any) {
+      if (e.message.includes('relation "restaurant_tables" does not exist')) {
+        await this.ensureTableExists();
+        return [];
+      }
+      throw e;
+    }
+  },
+
+  async saveLayout(tables: any[]) {
+    await this.ensureTableExists();
+    await sql`BEGIN`;
+    try {
+      await sql`DELETE FROM restaurant_tables`;
+      for (const t of tables) {
+        await sql`
+                  INSERT INTO restaurant_tables (id, label, x, y, width, height, seats, shape, type)
+                  VALUES (${t.id}, ${t.label}, ${t.x}, ${t.y}, ${t.width}, ${t.height}, ${t.seats}, ${t.shape}, ${t.type})
+              `;
+      }
+      await sql`COMMIT`;
+    } catch (e) {
+      await sql`ROLLBACK`;
+      throw e;
+    }
+  }
+};
+
+export const ReservationService = {
+  async ensureTableExists() {
+    try {
+      await sql`
+              CREATE TABLE IF NOT EXISTS reservations (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  name VARCHAR(255) NOT NULL,
+                  email VARCHAR(255) NOT NULL,
+                  phone VARCHAR(50) NOT NULL,
+                  date VARCHAR(50) NOT NULL,
+                  time VARCHAR(50) NOT NULL,
+                  guests INTEGER NOT NULL,
+                  table_id UUID,
+                  table_name VARCHAR(100),
+                  notes TEXT,
+                  status VARCHAR(50) DEFAULT 'confirmed',
+                  created_at TIMESTAMP DEFAULT NOW()
+              )
+          `;
+    } catch (e: any) {
+      // Ignore unique constraint violation on type/index creation race conditions
+      if (!e.message.includes('pg_type_typname_nsp_index')) {
+        throw e;
+      }
+    }
+  },
+
+  async createReservation(data: any) {
+    await this.ensureTableExists();
+    await sql`
+            INSERT INTO reservations (name, email, phone, date, time, guests, table_id, table_name, notes)
+            VALUES (${data.name}, ${data.email}, ${data.phone}, ${data.date}, ${data.time}, ${data.guests}, ${data.tableId || null}, ${data.tableName || null}, ${data.notes || ''})
+        `;
+  },
+
+  async getAllReservations() {
+    try {
+      return await sql`SELECT * FROM reservations ORDER BY created_at DESC`;
+    } catch (e: any) {
+      if (e.message.includes('relation "reservations" does not exist')) {
+        await this.ensureTableExists();
+        return [];
+      }
+      throw e;
+    }
   }
 };

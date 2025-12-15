@@ -82,6 +82,27 @@ const Checkout: React.FC = () => {
         }
     }, [userProfile, currentUser, setValue]);
 
+    const [savedDetailsAvailable, setSavedDetailsAvailable] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('savedDeliveryDetails');
+        if (saved) {
+            setSavedDetailsAvailable(true);
+        }
+    }, []);
+
+    const loadSavedDetails = () => {
+        const saved = localStorage.getItem('savedDeliveryDetails');
+        if (saved) {
+            const details = JSON.parse(saved);
+            setValue('name', details.name);
+            setValue('phone', details.phone);
+            setValue('locationId', details.locationId);
+            setValue('address', details.address);
+            setValue('orderType', 'delivery');
+        }
+    };
+
     // Watch fields for dynamic UI
     const orderType = useWatch({ control, name: 'orderType' });
     const locationId = useWatch({ control, name: 'locationId' });
@@ -128,11 +149,22 @@ const Checkout: React.FC = () => {
                 deliveryType: data.orderType,
                 deliveryAddress: data.orderType === 'delivery'
                     ? `${locations.find(l => l.id === data.locationId)?.name || ''} - ${data.address}`
-                    : `Pickup at ${data.pickupTime}`,
+                    : `Goodies Lounge & Wine Bar, Asafo Akim (Pickup at ${data.pickupTime})`,
                 paymentMethod: data.paymentMethod
             };
 
             await OrderService.createOrder(orderData);
+
+            // Save Delivery Details for next time
+            if (data.orderType === 'delivery') {
+                const savedDetails = {
+                    name: data.name,
+                    phone: data.phone,
+                    locationId: data.locationId,
+                    address: data.address
+                };
+                localStorage.setItem('savedDeliveryDetails', JSON.stringify(savedDetails));
+            }
 
             clearCart();
             // Navigate to Order History/Tracking
@@ -170,7 +202,7 @@ const Checkout: React.FC = () => {
                                     </div>
                                     <span className={`text-xs mt-2 font-medium absolute -bottom-6 w-32 text-center transition-colors ${step >= s ? 'text-brand-red' : 'text-gray-400'
                                         }`}>
-                                        {s === 1 ? 'Preference' : s === 2 ? 'Details' : 'Payment'}
+                                        {s === 1 ? 'Preference' : s === 2 ? 'Details' : 'Details'}
                                     </span>
                                 </div>
                                 {s < 3 && (
@@ -186,6 +218,23 @@ const Checkout: React.FC = () => {
 
                     {/* Main Content Area */}
                     <div className="w-full lg:w-2/3">
+
+                        {/* Saved Details Banner */}
+                        {savedDetailsAvailable && step === 1 && (
+                            <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-xl flex justify-between items-center animate-fade-in">
+                                <div>
+                                    <p className="font-bold text-blue-800 text-sm">Return Customer?</p>
+                                    <p className="text-xs text-blue-600">Use your details from the last order.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={loadSavedDetails}
+                                    className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition"
+                                >
+                                    Use Saved Details
+                                </button>
+                            </div>
+                        )}
 
                         {/* Step 1: Preference */}
                         {step === 1 && (

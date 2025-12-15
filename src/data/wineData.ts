@@ -1,11 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { MenuItem } from './menuData';
-import champagne1 from '../assets/champagne-1.jpg';
-import champagne2 from '../assets/champagne-2.jpg';
-import champagne3 from '../assets/champagne-3.jpg';
-import champagne4 from '../assets/champagne-4.png';
-import jackDaniels from '../assets/jack-daniels.png';
-import baileys from '../assets/baileys.jpg';
 
 export const wineData: MenuItem[] = [
     // Wines (Combined Red & White)
@@ -57,7 +51,7 @@ export const wineData: MenuItem[] = [
         description: 'A delicious expression of the Moët & Chandon style, distinguished by its bright fruitiness.',
         price: 950,
         category: 'Champagne',
-        image: champagne3, // Assumed mapping for now
+        image: '/images/champagne-3.jpg', // Assumed mapping for now
     },
     {
         id: uuidv4(),
@@ -65,7 +59,7 @@ export const wineData: MenuItem[] = [
         description: 'A perfect balance between power and finesse, its complexity comes from the predominant presence of Pinot Noir.',
         price: 900,
         category: 'Champagne',
-        image: champagne4, // Assumed mapping
+        image: '/images/champagne-4.png', // Assumed mapping
     },
     {
         id: uuidv4(),
@@ -73,7 +67,7 @@ export const wineData: MenuItem[] = [
         description: 'A refreshing, fruity sparkling wine with aromas of fresh strawberry and blackcurrant.',
         price: 550,
         category: 'Champagne',
-        image: champagne1, // Assumed mapping
+        image: '/images/champagne-1.jpg', // Assumed mapping
     },
     {
         id: uuidv4(),
@@ -81,7 +75,7 @@ export const wineData: MenuItem[] = [
         description: 'Vintage champagne with an intense, complex, and radiant bouquet.',
         price: 3500,
         category: 'Champagne',
-        image: champagne2, // Assumed mapping
+        image: '/images/champagne-2.jpg', // Assumed mapping
     },
 
     // Spirits
@@ -99,7 +93,7 @@ export const wineData: MenuItem[] = [
         description: 'Tennessee Whiskey charcoal mellowed for smoothness.',
         price: 350,
         category: 'Spirits',
-        image: jackDaniels,
+        image: '/images/jack-daniels.png',
     },
     {
         id: uuidv4(),
@@ -123,7 +117,7 @@ export const wineData: MenuItem[] = [
         description: 'The original Irish cream liqueur, perfect over ice.',
         price: 250,
         category: 'Spirits',
-        image: baileys,
+        image: '/images/baileys.jpg',
     },
     {
         id: uuidv4(),
