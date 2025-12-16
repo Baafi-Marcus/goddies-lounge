@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+// verifying file content first
 
 // TODO: Replace with your Neon connection string
 const DATABASE_URL = import.meta.env.VITE_DATABASE_URL;

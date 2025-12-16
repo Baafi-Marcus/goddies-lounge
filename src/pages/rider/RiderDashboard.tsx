@@ -20,6 +20,12 @@ const RiderDashboard: React.FC = () => {
         new Date(d.deliveredAt || '').toDateString() === new Date().toDateString()
     );
 
+    // Calculate actual stats from delivery data
+    const totalCompletedDeliveries = myDeliveries.filter(d => d.status === 'delivered').length;
+    const totalEarnings = myDeliveries
+        .filter(d => d.status === 'delivered')
+        .reduce((sum, d) => sum + (Number(d.riderEarning) || 0), 0);
+
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-4">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -32,7 +38,7 @@ const RiderDashboard: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm">Total Deliveries</p>
-                                <p className="text-2xl font-bold text-brand-dark">{currentRider.totalDeliveries}</p>
+                                <p className="text-2xl font-bold text-brand-dark">{totalCompletedDeliveries}</p>
                             </div>
                         </div>
                     </div>
@@ -56,7 +62,7 @@ const RiderDashboard: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm">Total Earnings</p>
-                                <p className="text-2xl font-bold text-brand-dark">₵{(currentRider.totalEarnings || 0).toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-brand-dark">₵{totalEarnings.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>

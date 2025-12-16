@@ -24,7 +24,22 @@ const RiderLogin: React.FC = () => {
         vehicleNumber: '',
         password: '',
         confirmPassword: '',
+        momoNumber: '',
+        ghanaCardNumber: '',
+        ghanaCardImage: '',
+        selfieImage: ''
     });
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'ghanaCardImage' | 'selfieImage') => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setRegisterData(prev => ({ ...prev, [field]: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,6 +67,11 @@ const RiderLogin: React.FC = () => {
             return;
         }
 
+        if (!registerData.ghanaCardImage || !registerData.selfieImage) {
+            setError('Please upload both detailed Ghana Card image and a live selfie');
+            return;
+        }
+
         // Generate registration number
         const registrationNumber = `RDR${Date.now().toString().slice(-6)}`;
 
@@ -62,11 +82,15 @@ const RiderLogin: React.FC = () => {
             phone: registerData.phone,
             vehicleType: registerData.vehicleType,
             vehicleNumber: registerData.vehicleNumber,
-            password: registerData.password, // Pass password for user creation
-            status: 'inactive', // Requires admin approval
+            password: registerData.password,
+            status: 'inactive',
+            momoNumber: registerData.momoNumber,
+            ghanaCardNumber: registerData.ghanaCardNumber,
+            ghanaCardImage: registerData.ghanaCardImage,
+            selfieImage: registerData.selfieImage
         });
 
-        alert(`Registration successful! Your registration number is: ${registrationNumber}\nPlease wait for admin approval before logging in.`);
+        alert(`Registration successful! Your registration number is: ${registrationNumber}\nPlease wait for admin verification and approval.`);
         setIsRegistering(false);
         setRegisterData({
             name: '',
@@ -76,6 +100,10 @@ const RiderLogin: React.FC = () => {
             vehicleNumber: '',
             password: '',
             confirmPassword: '',
+            momoNumber: '',
+            ghanaCardNumber: '',
+            ghanaCardImage: '',
+            selfieImage: ''
         });
     };
 
@@ -263,15 +291,75 @@ const RiderLogin: React.FC = () => {
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Money Number</label>
+                                        <input
+                                            type="tel"
+                                            value={registerData.momoNumber}
+                                            onChange={(e) => setRegisterData({ ...registerData, momoNumber: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none"
+                                            placeholder="024..."
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ghana Card Number</label>
+                                        <input
+                                            type="text"
+                                            value={registerData.ghanaCardNumber}
+                                            onChange={(e) => setRegisterData({ ...registerData, ghanaCardNumber: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none"
+                                            placeholder="GHA-..."
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ghana Card Image</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleImageUpload(e, 'ghanaCardImage')}
+                                        className="w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-full file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-brand-yellow file:text-brand-dark
+                                          hover:file:bg-yellow-400"
+                                        required
+                                    />
+                                    {registerData.ghanaCardImage && <span className="text-xs text-green-600 ml-2">Image uploaded</span>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Live Selfie (For Verification)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="user" // Prompts camera on mobile
+                                        onChange={(e) => handleImageUpload(e, 'selfieImage')}
+                                        className="w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-full file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-brand-yellow file:text-brand-dark
+                                          hover:file:bg-yellow-400"
+                                        required
+                                    />
+                                    {registerData.selfieImage && <span className="text-xs text-green-600 ml-2">Image uploaded</span>}
+                                </div>
+
                                 <button
                                     type="submit"
                                     className="w-full bg-brand-red text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors"
                                 >
-                                    Register
+                                    Register & Request Approval
                                 </button>
 
                                 <p className="text-xs text-gray-500 text-center">
-                                    Registration requires admin approval before you can start delivering
+                                    Registration requires admin approval. You will be notified once verified.
                                 </p>
                             </form>
                         )}

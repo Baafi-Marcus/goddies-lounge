@@ -97,11 +97,11 @@ const Cart: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between text-gray-600">
                                     <span>Delivery Fee</span>
-                                    <span>₵15.00</span>
+                                    <span className="text-sm italic">Calculated at checkout</span>
                                 </div>
                                 <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-xl">
                                     <span>Total</span>
-                                    <span className="text-brand-red">₵{(cartTotal + 15).toFixed(2)}</span>
+                                    <span className="text-brand-red">₵{cartTotal.toFixed(2)}</span>
                                 </div>
                             </div>
 

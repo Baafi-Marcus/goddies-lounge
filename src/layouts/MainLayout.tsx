@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FaShoppingCart, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp, FaUser, FaCalendarAlt } from 'react-icons/fa';
+import { FaShoppingBag, FaBars, FaTimes, FaPhoneAlt, FaMapMarkerAlt, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaFacebook, FaTiktok, FaTwitter, FaWhatsapp, FaUser, FaCalendarAlt } from 'react-icons/fa';
 import { MdRestaurantMenu } from 'react-icons/md';
 import logo from '../assets/logo.jpg';
 import { useCart } from '../context/CartContext';
@@ -26,7 +26,7 @@ const MainLayout: React.FC = () => {
         { name: 'Reservations', path: '/user/reservations', icon: <FaCalendarAlt /> },
         { name: 'Orders', path: '/user/orders', icon: <FaUtensils /> },
         { name: 'Profile', path: '/user/profile', icon: <FaUser /> },
-        { name: 'My Cart', path: '/user/cart', icon: <FaShoppingCart /> },
+        { name: 'My Cart', path: '/user/cart', icon: <FaShoppingBag /> },
     ];
 
     const isActive = (path: string) => location.pathname === path;
