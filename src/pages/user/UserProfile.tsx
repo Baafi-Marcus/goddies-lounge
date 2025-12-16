@@ -1,53 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { DeliveryService } from '../../services/neon';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaHistory, FaSignOutAlt, FaPhone, FaEnvelope, FaLock, FaBoxOpen } from 'react-icons/fa';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { auth } from '../../services/firebase';
-
-interface Delivery {
-    id: string;
-    created_at: string;
-    status: string;
-    total_amount?: number;
-    order_details?: any;
-    delivery_fee: number;
-}
+import { useNavigate, Link } from 'react-router-dom';
+import { FaUser, FaSignOutAlt, FaPhone, FaEnvelope, FaLock, FaCog, FaTrash, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, updateEmail, deleteUser } from 'firebase/auth';
+import { UserService } from '../../services/neon';
 
 const UserProfile: React.FC = () => {
     const { currentUser, userProfile, logout, loading } = useAuth();
     const navigate = useNavigate();
-    const [deliveries, setDeliveries] = useState<any[]>([]);
-    const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
-    // Password Change State
+    // Settings state
+    const [showSettings, setShowSettings] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Edit profile state
+    const [editName, setEditName] = useState('');
+    const [editEmail, setEditEmail] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+
+    // Password change state
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [passwordMessage, setPasswordMessage] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setPasswordMessage('');
-        if (!currentUser || !currentUser.email) return;
-
-        try {
-            // Re-authenticate first
-            const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-            await reauthenticateWithCredential(currentUser, credential);
-
-            // Update password
-            await updatePassword(currentUser, newPassword);
-            setPasswordMessage('Password updated successfully!');
-            setIsChangingPassword(false);
-            setCurrentPassword('');
-            setNewPassword('');
-        } catch (error: any) {
-            console.error(error);
-            setPasswordMessage('Failed to update password. Check your current password.');
-        }
-    };
+    // Messages
+    const [message, setMessage] = useState('');
+    const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
     useEffect(() => {
         if (!loading && !currentUser) {
@@ -56,24 +35,104 @@ const UserProfile: React.FC = () => {
     }, [currentUser, loading, navigate]);
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            if (userProfile?.id) {
-                setIsLoadingOrders(true);
-                try {
-                    const data = await DeliveryService.getDeliveriesByCustomerId(userProfile.id);
-                    setDeliveries(data);
-                } catch (error) {
-                    console.error("Failed to fetch orders:", error);
-                } finally {
-                    setIsLoadingOrders(false);
-                }
-            }
-        };
-
-        if (userProfile?.id) {
-            fetchOrders();
+        if (userProfile) {
+            setEditName(userProfile.full_name || '');
+            setEditEmail(currentUser?.email || '');
+            setEditPhone(userProfile.phone || '');
         }
-    }, [userProfile]);
+    }, [userProfile, currentUser]);
+
+    const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
+        setMessage(msg);
+        setMessageType(type);
+        setTimeout(() => setMessage(''), 5000);
+    };
+
+    const handleUpdateProfile = async () => {
+        if (!userProfile?.id) return;
+
+        try {
+            // Update Neon database profile
+            await UserService.updateUser(userProfile.id, {
+                full_name: editName,
+                phone: editPhone,
+                email: editEmail,
+            });
+
+            // Update Firebase email if changed
+            if (editEmail !== currentUser?.email && currentUser) {
+                await updateEmail(currentUser, editEmail);
+            }
+
+            showMessage('Profile updated successfully!', 'success');
+            setIsEditing(false);
+            // Refresh page to show updated data
+            window.location.reload();
+        } catch (error: any) {
+            console.error(error);
+            showMessage('Failed to update profile. ' + error.message, 'error');
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (newPassword !== confirmPassword) {
+            showMessage('Passwords do not match!', 'error');
+            return;
+        }
+
+        if (!currentUser || !currentUser.email) return;
+
+        try {
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+            await reauthenticateWithCredential(currentUser, credential);
+            await updatePassword(currentUser, newPassword);
+
+            showMessage('Password updated successfully!', 'success');
+            setIsChangingPassword(false);
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (error: any) {
+            console.error(error);
+            showMessage('Failed to update password. Check your current password.', 'error');
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm(
+            'Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.'
+        );
+
+        if (!confirmed) return;
+
+        const doubleConfirm = window.prompt(
+            'Type "DELETE" to confirm account deletion:'
+        );
+
+        if (doubleConfirm !== 'DELETE') {
+            showMessage('Account deletion cancelled.', 'error');
+            return;
+        }
+
+        try {
+            // Delete user from Neon database
+            if (userProfile?.id) {
+                await UserService.deleteUser(userProfile.id);
+            }
+
+            // Delete Firebase Auth account
+            if (currentUser) {
+                await deleteUser(currentUser);
+            }
+
+            navigate('/');
+        } catch (error: any) {
+            console.error(error);
+            showMessage('Failed to delete account. You may need to re-login and try again.', 'error');
+        }
+    };
 
     const handleLogout = async () => {
         await logout();
@@ -83,64 +142,140 @@ const UserProfile: React.FC = () => {
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20 pt-24 font-sans">
-            <div className="container mx-auto px-4 max-w-5xl">
+        <div className="bg-gray-50 min-h-screen pb-20 pt-10 px-4 font-sans">
+            <div className="container mx-auto max-w-4xl">
+
+                {/* Message Banner */}
+                {message && (
+                    <div className={`mb-6 p-4 rounded-xl ${messageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {message}
+                    </div>
+                )}
 
                 {/* Profile Header */}
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 mb-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 mb-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-brand-yellow/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
 
-                    <div className="w-24 h-24 rounded-full bg-brand-dark text-white flex items-center justify-center text-4xl shadow-md z-10">
-                        <FaUser />
-                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-24 h-24 rounded-full bg-brand-dark text-white flex items-center justify-center text-4xl shadow-md">
+                            <FaUser />
+                        </div>
 
-                    <div className="flex-grow text-center md:text-left z-10">
-                        <h1 className="text-3xl font-bold text-gray-900">{userProfile?.full_name || currentUser?.displayName || 'Valued Customer'}</h1>
-                        <p className="text-gray-500 mt-1 flex items-center justify-center md:justify-start gap-4">
-                            {userProfile?.phone && <span className="flex items-center gap-1"><FaPhone className="text-xs" /> {userProfile.phone}</span>}
-                            {currentUser?.email && <span className="flex items-center gap-1"><FaEnvelope className="text-xs" /> {currentUser.email}</span>}
-                        </p>
-                    </div>
+                        <div className="flex-grow text-center md:text-left">
+                            <h1 className="text-3xl font-bold text-gray-900">{userProfile?.full_name || currentUser?.displayName || 'Valued Customer'}</h1>
+                            <p className="text-gray-500 mt-2 flex flex-col md:flex-row items-center justify-center md:justify-start gap-4">
+                                {userProfile?.phone && <span className="flex items-center gap-1"><FaPhone className="text-xs" /> {userProfile.phone}</span>}
+                                {currentUser?.email && <span className="flex items-center gap-1"><FaEnvelope className="text-xs" /> {currentUser.email}</span>}
+                            </p>
+                        </div>
 
-                    <button
-                        onClick={handleLogout}
-                        className="px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center gap-2 z-10"
-                    >
-                        <FaSignOutAlt /> Sign Out
-                    </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowSettings(!showSettings)}
+                                className="px-6 py-3 bg-brand-red text-white rounded-xl font-bold hover:bg-red-700 transition-colors flex items-center gap-2"
+                            >
+                                <FaCog /> Settings
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center gap-2"
+                            >
+                                <FaSignOutAlt /> Sign Out
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Settings Panel */}
+                {showSettings && (
+                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 mb-8 space-y-8">
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <FaCog className="text-brand-red" /> Account Settings
+                        </h2>
 
-                    {/* Sidebar / Stats */}
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                            <h3 className="font-bold text-gray-500 text-sm uppercase tracking-wider mb-4">Account Overview</h3>
-                            <div className="flex items-center justify-between py-3 border-b border-gray-50">
-                                <span className="text-gray-700 font-medium">Total Orders</span>
-                                <span className="text-xl font-bold text-brand-dark">{deliveries.length}</span>
+                        {/* Edit Profile Section */}
+                        <div className="border-t border-gray-100 pt-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold text-gray-800">Profile Information</h3>
+                                {!isEditing ? (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors"
+                                    >
+                                        <FaEdit /> Edit
+                                    </button>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleUpdateProfile}
+                                            className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg font-medium hover:bg-green-100 transition-colors"
+                                        >
+                                            <FaSave /> Save
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(false);
+                                                setEditName(userProfile?.full_name || '');
+                                                setEditEmail(currentUser?.email || '');
+                                                setEditPhone(userProfile?.phone || '');
+                                            }}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                                        >
+                                            <FaTimes /> Cancel
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex items-center justify-between py-3">
-                                <span className="text-gray-700 font-medium">Member Since</span>
-                                <span className="text-brand-dark">{userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'Recently'}</span>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none disabled:bg-gray-100"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editEmail}
+                                        onChange={(e) => setEditEmail(e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none disabled:bg-gray-100"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                    <input
+                                        type="tel"
+                                        value={editPhone}
+                                        onChange={(e) => setEditPhone(e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none disabled:bg-gray-100"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <FaLock className="text-brand-red" />
-                                Security
-                            </h2>
+                        {/* Change Password Section */}
+                        <div className="border-t border-gray-100 pt-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <FaLock className="text-brand-red" /> Change Password
+                            </h3>
+
                             {!isChangingPassword ? (
                                 <button
                                     onClick={() => setIsChangingPassword(true)}
-                                    className="text-brand-red hover:text-red-700 font-medium underline"
+                                    className="px-4 py-2 bg-brand-red text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
                                 >
                                     Change Password
                                 </button>
                             ) : (
-                                <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+                                <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
                                         <input
@@ -162,10 +297,21 @@ const UserProfile: React.FC = () => {
                                             minLength={6}
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none"
+                                            required
+                                            minLength={6}
+                                        />
+                                    </div>
                                     <div className="flex gap-3">
                                         <button
                                             type="submit"
-                                            className="bg-brand-red text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors"
+                                            className="px-4 py-2 bg-brand-red text-white rounded-lg font-bold hover:bg-red-700 transition-colors"
                                         >
                                             Update Password
                                         </button>
@@ -175,79 +321,51 @@ const UserProfile: React.FC = () => {
                                                 setIsChangingPassword(false);
                                                 setCurrentPassword('');
                                                 setNewPassword('');
-                                                setPasswordMessage('');
+                                                setConfirmPassword('');
                                             }}
-                                            className="text-gray-500 hover:text-gray-700 px-4 py-2"
+                                            className="px-4 py-2 text-gray-500 hover:text-gray-700"
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 </form>
                             )}
-                            {passwordMessage && <p className={`mt-4 text-sm font-medium ${passwordMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>{passwordMessage}</p>}
+                        </div>
+
+                        {/* Delete Account Section */}
+                        <div className="border-t border-gray-100 pt-6">
+                            <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center gap-2">
+                                <FaTrash /> Danger Zone
+                            </h3>
+                            <p className="text-gray-600 mb-4">
+                                Once you delete your account, there is no going back. All your data will be permanently deleted.
+                            </p>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center gap-2"
+                            >
+                                <FaTrash /> Delete My Account
+                            </button>
                         </div>
                     </div>
+                )}
 
-                    {/* Order History */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            <FaHistory className="text-brand-red" /> Order History
-                        </h2>
-
-                        {isLoadingOrders ? (
-                            <div className="flex justify-center p-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div></div>
-                        ) : deliveries.length > 0 ? (
-                            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                                {deliveries.map((order) => (
-                                    <div key={order.id} className="p-6 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-                                                        ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                                order.status === 'in_transit' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                        {order.status.replace('_', ' ')}
-                                                    </span>
-                                                    <span className="text-gray-400 text-sm">{new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                </div>
-                                                <h4 className="font-bold text-lg text-gray-800">Delivery #{order.id.slice(0, 8)}</h4>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-xl text-brand-dark">₵{(Number(order.delivery_fee) + (Number(order.total) || 0)).toFixed(2)}</p>
-                                                <p className="text-xs text-gray-400">Total Paid</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-gray-50 rounded-xl p-4 flex flex-col md:flex-row gap-4 text-sm text-gray-600">
-                                            <div className="flex-1">
-                                                <span className="block text-xs font-bold text-gray-400 uppercase mb-1">Pickup</span>
-                                                {order.pickup_location}
-                                            </div>
-                                            <div className="hidden md:block w-px bg-gray-200"></div>
-                                            <div className="flex-1">
-                                                <span className="block text-xs font-bold text-gray-400 uppercase mb-1">Destination</span>
-                                                {order.delivery_location}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-3xl p-12 text-center border border-gray-100">
-                                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6 text-gray-400 text-4xl">
-                                    <FaBoxOpen />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">No orders yet</h3>
-                                <p className="text-gray-500 mb-8">Looks like you haven't placed any orders yet.</p>
-                                <button onClick={() => navigate('/user/menu')} className="btn-primary">
-                                    Start Ordering
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
+                {/* Quick Links */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Link to="/user/orders" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <h3 className="font-bold text-lg text-gray-800 mb-2">My Orders</h3>
+                        <p className="text-gray-500 text-sm">View and track your orders</p>
+                    </Link>
+                    <Link to="/user/reservations" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <h3 className="font-bold text-lg text-gray-800 mb-2">My Reservations</h3>
+                        <p className="text-gray-500 text-sm">Manage table bookings</p>
+                    </Link>
+                    <Link to="/user/menu" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <h3 className="font-bold text-lg text-gray-800 mb-2">Browse Menu</h3>
+                        <p className="text-gray-500 text-sm">Explore our delicious offerings</p>
+                    </Link>
                 </div>
+
             </div>
         </div>
     );

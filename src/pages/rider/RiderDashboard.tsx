@@ -1,17 +1,15 @@
 import React from 'react';
 import { useRider } from '../../context/RiderContext';
-import { useNavigate } from 'react-router-dom';
-import { FaMotorcycle, FaBox, FaMoneyBillWave, FaSignOutAlt, FaCheckCircle, FaClock } from 'react-icons/fa';
+import { FaMotorcycle, FaBox, FaMoneyBillWave, FaCheckCircle, FaClock } from 'react-icons/fa';
 
 const RiderDashboard: React.FC = () => {
-    const { currentRider, deliveries, activeDelivery, logout } = useRider();
-    const navigate = useNavigate();
+    const { currentRider, deliveries, activeDelivery } = useRider();
 
     React.useEffect(() => {
         if (!currentRider) {
-            navigate('/rider/login');
+            // Redirect handled by RiderLayout
         }
-    }, [currentRider, navigate]);
+    }, [currentRider]);
 
     if (!currentRider) return null;
 
@@ -22,30 +20,9 @@ const RiderDashboard: React.FC = () => {
         new Date(d.deliveredAt || '').toDateString() === new Date().toDateString()
     );
 
-    const handleLogout = () => {
-        logout();
-        navigate('/rider/login');
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="bg-brand-dark text-white p-6 shadow-lg">
-                <div className="max-w-4xl mx-auto flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-heading font-bold">Welcome, {currentRider.name}!</h1>
-                        <p className="text-brand-yellow text-sm">{currentRider.registrationNumber}</p>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                    >
-                        <FaSignOutAlt /> Logout
-                    </button>
-                </div>
-            </div>
-
-            <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="min-h-screen bg-gray-50 py-10 px-4">
+            <div className="max-w-4xl mx-auto space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-brand-yellow">

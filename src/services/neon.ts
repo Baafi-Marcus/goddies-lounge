@@ -95,6 +95,14 @@ export const DeliveryService = {
       `;
   },
 
+  async getDeliveriesByRiderId(riderId: string) {
+    return await sql`
+    SELECT * FROM deliveries 
+      WHERE rider_id = ${riderId}
+      ORDER BY created_at DESC
+      `;
+  },
+
   async createDelivery(deliveryData: any) {
     return await sql`
       INSERT INTO deliveries(
@@ -494,5 +502,41 @@ export const ReservationService = {
       }
       throw e;
     }
+  },
+
+  async getReservationsByEmail(email: string) {
+    await this.ensureTableExists();
+    return await sql`
+      SELECT * FROM reservations 
+      WHERE email = ${email} 
+      ORDER BY date DESC, time DESC
+    `;
+  },
+
+  async cancelReservation(id: string) {
+    await this.ensureTableExists();
+    await sql`
+      UPDATE reservations 
+      SET status = 'cancelled' 
+      WHERE id = ${id}
+    `;
+  },
+
+  async confirmReservation(id: string) {
+    await this.ensureTableExists();
+    await sql`
+      UPDATE reservations 
+      SET status = 'completed' 
+      WHERE id = ${id}
+    `;
+  },
+
+  async markNoShow(id: string) {
+    await this.ensureTableExists();
+    await sql`
+      UPDATE reservations 
+      SET status = 'no-show' 
+      WHERE id = ${id}
+    `;
   }
 };

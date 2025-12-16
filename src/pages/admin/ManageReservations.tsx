@@ -25,6 +25,54 @@ const ManageReservations: React.FC = () => {
         }
     };
 
+    const handleConfirm = async (id: string) => {
+        try {
+            const { ReservationService } = await import('../../services/neon');
+            await ReservationService.confirmReservation(id);
+            fetchReservations(); // Refresh list
+        } catch (error) {
+            console.error("Failed to confirm reservation", error);
+            alert("Failed to confirm reservation");
+        }
+    };
+
+    const handleNoShow = async (id: string) => {
+        if (window.confirm("Mark this reservation as no-show?")) {
+            try {
+                const { ReservationService } = await import('../../services/neon');
+                await ReservationService.markNoShow(id);
+                fetchReservations(); // Refresh list
+            } catch (error) {
+                console.error("Failed to mark no-show", error);
+                alert("Failed to mark no-show");
+            }
+        }
+    };
+
+    const canTakeAction = (reservationDate: string) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const resDate = new Date(reservationDate);
+        resDate.setHours(0, 0, 0, 0);
+        return resDate <= today; // Can only take action on or after the date
+    };
+
+    const getStatusBadgeClass = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'completed':
+                return 'bg-green-100 text-green-800';
+            case 'no-show':
+                return 'bg-red-100 text-red-800';
+            case 'cancelled':
+                return 'bg-gray-100 text-gray-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'confirmed':
+            default:
+                return 'bg-blue-100 text-blue-800';
+        }
+    };
+
     // Table Templates
     const tableTemplates = [
         { type: '2-seater', seats: 2, width: 60, height: 60, shape: 'rectangle', label: '2 Seat' },
@@ -226,12 +274,13 @@ const ManageReservations: React.FC = () => {
                                 <th className="px-4 py-3">Guests</th>
                                 <th className="px-4 py-3">Status</th>
                                 <th className="px-4 py-3">Notes</th>
+                                <th className="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {reservations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                                         No reservations found.
                                     </td>
                                 </tr>
@@ -248,16 +297,34 @@ const ManageReservations: React.FC = () => {
                                             <div className="text-gray-500">{res.time}</div>
                                         </td>
                                         <td className="px-4 py-3 text-sm font-medium text-brand-blue">
-                                            {res.tableName || 'N/A'}
+                                            {res.table_name || 'N/A'}
                                         </td>
                                         <td className="px-4 py-3 text-sm">{res.guests}</td>
                                         <td className="px-4 py-3">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                {res.status}
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(res.status)}`}>
+                                                {res.status || 'pending'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
                                             {res.notes || '-'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {canTakeAction(res.date) && (res.status === 'pending' || res.status === 'confirmed') && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleConfirm(res.id)}
+                                                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-xs font-medium"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleNoShow(res.id)}
+                                                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-medium"
+                                                    >
+                                                        No-Show
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

@@ -5,6 +5,7 @@ import { MdRestaurantMenu } from 'react-icons/md';
 import logo from '../assets/logo.jpg';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import MobileBottomNav from '../components/MobileBottomNav';
 
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -84,17 +85,19 @@ const MainLayout: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <button
-                        className={`${isTransparent ? 'text-white' : 'text-brand-dark'} md:hidden focus:outline-none`}
-                        onClick={toggleMenu}
-                    >
-                        {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-                    </button>
+                    {/* Mobile Menu Button - Only show on non-user pages */}
+                    {!isUserPage && (
+                        <button
+                            className={`${isTransparent ? 'text-white' : 'text-brand-dark'} md:hidden focus:outline-none`}
+                            onClick={toggleMenu}
+                        >
+                            {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+                        </button>
+                    )}
                 </div>
 
-                {/* Mobile Nav */}
-                {isMobileMenuOpen && (
+                {/* Mobile Nav - Only show on non-user pages */}
+                {isMobileMenuOpen && !isUserPage && (
                     <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 shadow-lg absolute w-full left-0 text-brand-dark">
                         <nav className="flex flex-col gap-4">
                             {currentLinks.map((link) => (
@@ -123,9 +126,12 @@ const MainLayout: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-grow">
+            <main className={`flex-grow ${isUserPage ? 'pb-20 md:pb-0' : ''}`}>
                 <Outlet />
             </main>
+
+            {/* Mobile Bottom Navigation - Only for user pages */}
+            {isUserPage && <MobileBottomNav />}
 
             {/* Footer */}
             <footer className="bg-brand-dark text-white pt-16 pb-8">

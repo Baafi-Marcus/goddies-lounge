@@ -33,8 +33,11 @@ import ManageDeliveries from './pages/admin/ManageDeliveries';
 import ManageRiders from './pages/admin/ManageRiders';
 import CustomersList from './pages/admin/CustomersList';
 
-import RiderLogin from './pages/rider/RiderLogin';
+import RiderLayout from './layouts/RiderLayout';
 import RiderDashboard from './pages/rider/RiderDashboard';
+import RiderDeliveries from './pages/rider/RiderDeliveries';
+import RiderProfile from './pages/rider/RiderProfile';
+import RiderLogin from './pages/rider/RiderLogin';
 import PickupVerification from './pages/rider/PickupVerification';
 import ActiveDelivery from './pages/rider/ActiveDelivery';
 
@@ -83,9 +86,13 @@ const App: React.FC = () => {
 
                 {/* Rider Routes */}
                 <Route path="/rider/login" element={<RiderLogin />} />
-                <Route path="/rider/dashboard" element={<RiderDashboard />} />
-                <Route path="/rider/pickup" element={<PickupVerification />} />
-                <Route path="/rider/delivery/:id" element={<ActiveDelivery />} />
+                <Route path="/rider" element={<RiderLayout />}>
+                  <Route path="dashboard" element={<RiderDashboard />} />
+                  <Route path="deliveries" element={<RiderDeliveries />} />
+                  <Route path="profile" element={<RiderProfile />} />
+                  <Route path="pickup" element={<PickupVerification />} />
+                  <Route path="active/:id" element={<ActiveDelivery />} />
+                </Route>
               </Routes>
             </Router>
           </RiderProvider>
