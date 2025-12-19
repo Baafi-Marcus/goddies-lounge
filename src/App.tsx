@@ -29,6 +29,7 @@ import ManageMenu from './pages/admin/ManageMenu';
 import ManageWines from './pages/admin/ManageWines';
 import ManageOrders from './pages/admin/ManageOrders';
 import ManageReservations from './pages/admin/ManageReservations';
+import ManageLocations from './pages/admin/ManageLocations';
 import ManageDeliveries from './pages/admin/ManageDeliveries';
 import ManageRiders from './pages/admin/ManageRiders';
 import CustomersList from './pages/admin/CustomersList';
@@ -78,6 +79,7 @@ const App: React.FC = () => {
                   <Route path="menu" element={<ManageMenu />} />
                   <Route path="wines" element={<ManageWines />} />
                   <Route path="orders" element={<ManageOrders />} />
+                  <Route path="locations" element={<ManageLocations />} /> {/* Added ManageLocations route */}
                   <Route path="reservations" element={<ManageReservations />} />
                   <Route path="deliveries" element={<ManageDeliveries />} />
                   <Route path="riders" element={<ManageRiders />} />

@@ -198,14 +198,14 @@ const ManageWines: React.FC = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] animate-fade-in">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
                             <h3 className="text-xl font-bold">{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 &times;
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                 <input
@@ -254,15 +254,63 @@ const ManageWines: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                <input
-                                    type="url"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-brand-red"
-                                    placeholder="https://..."
-                                    required
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+
+                                {/* Image Preview */}
+                                {formData.image && (
+                                    <div className="mb-3 relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                        <img
+                                            src={formData.image}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, image: '' })}
+                                            className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition-colors"
+                                        >
+                                            <FaTrash size={12} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    {/* File Input */}
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setFormData({ ...formData, image: reader.result as string });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="w-full text-sm text-gray-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-brand-yellow file:text-brand-dark
+                                                hover:file:bg-yellow-400
+                                                cursor-pointer"
+                                        />
+                                    </div>
+
+                                    <div className="text-center text-xs text-gray-400 font-medium">OR</div>
+
+                                    {/* URL Fallback */}
+                                    <input
+                                        type="url"
+                                        value={formData.image}
+                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-brand-red text-sm"
+                                        placeholder="Paste image URL directly..."
+                                    />
+                                </div>
                             </div>
                             <div className="pt-4 flex gap-4">
                                 <button

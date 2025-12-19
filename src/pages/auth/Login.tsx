@@ -314,9 +314,31 @@ const Login: React.FC = () => {
                         </div>
                     )}
 
-                    {/* --- REGISTER FORM --- */}
                     {activeTab === 'register' && (
                         <div className="space-y-6">
+                            {/* Google Sign Up */}
+                            {regStep === 1 && (
+                                <>
+                                    <button
+                                        onClick={handleGoogleLogin}
+                                        disabled={loading}
+                                        className="w-full py-4 px-6 flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+                                    >
+                                        <FaGoogle className="text-red-500 text-xl" />
+                                        Sign up with Google
+                                    </button>
+
+                                    <div className="relative py-2">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-white/20"></div>
+                                        </div>
+                                        <div className="relative flex justify-center">
+                                            <span className="bg-transparent px-4 text-sm text-gray-400">or register with phone</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
                             {/* Step 1: Phone */}
                             {regStep === 1 && (
                                 <form onSubmit={handlePhoneSubmit} className="space-y-4">

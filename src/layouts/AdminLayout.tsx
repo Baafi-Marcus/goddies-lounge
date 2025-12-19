@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaTachometerAlt, FaUtensils, FaClipboardList, FaCalendarCheck, FaMotorcycle, FaUsers, FaSignOutAlt, FaBars, FaWineGlass } from 'react-icons/fa';
+import { FaTachometerAlt, FaUtensils, FaClipboardList, FaCalendarCheck, FaMotorcycle, FaUsers, FaSignOutAlt, FaBars, FaWineGlass, FaMapMarkerAlt } from 'react-icons/fa';
 
 const AdminLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,6 +25,7 @@ const AdminLayout: React.FC = () => {
         { name: 'Menu Items', path: '/admin/menu', icon: <FaUtensils /> },
         { name: 'Wines & Drinks', path: '/admin/wines', icon: <FaWineGlass /> },
         { name: 'Orders', path: '/admin/orders', icon: <FaClipboardList /> },
+        { name: 'Locations', path: '/admin/locations', icon: <FaMapMarkerAlt /> },
         { name: 'Reservations', path: '/admin/reservations', icon: <FaCalendarCheck /> },
         { name: 'Deliveries', path: '/admin/deliveries', icon: <FaMotorcycle /> },
         { name: 'Riders', path: '/admin/riders', icon: <FaMotorcycle /> },

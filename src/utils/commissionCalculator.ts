@@ -1,5 +1,3 @@
-import { locations } from '../data/locations';
-
 /**
  * Calculate commission percentage based on delivery location
  * Commission tiers based on distance/location:
@@ -9,10 +7,15 @@ import { locations } from '../data/locations';
  * - Tier 4 (very far): 2%
  * - Tier 5 (extremely far): 5%
  */
-export const calculateCommission = (locationId: string, deliveryFee: number): number => {
-    const location = locations.find(loc => loc.id === locationId);
+export const calculateCommission = (locationId: string, deliveryFee: number, availableLocations?: { id: string }[]): number => {
+    // If locations provided, validate existence (optional based on logic capability)
+    // For now, reliance on deliveryFee is primary for commission tiers
 
-    if (!location) {
+    // Original logic checked if location exists.
+    // We can assume valid locationId if it comes from valid source, or pass locations.
+    const locationExists = availableLocations ? availableLocations.some(loc => loc.id === locationId) : true;
+
+    if (!locationExists) {
         return deliveryFee * 0.01; // Default 1% if location not found
     }
 

@@ -1,14 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync } from 'react-icons/fa';
 import { generateVerificationCode, generateCustomerConfirmationCode } from '../../utils/qrCodeGenerator';
-import { OrderService, RiderService, DeliveryService } from '../../services/neon';
-import { locations } from '../../data/locations';
+import { OrderService, RiderService, DeliveryService, LocationService } from '../../services/neon';
+import { calculateCommission, calculateRiderEarning } from '../../utils/commissionCalculator';
 
 interface OrderItem {
     id?: string;
     name: string;
     quantity: number;
-    price: number;
 }
 
 interface Order {
@@ -43,18 +43,29 @@ const ManageOrders: React.FC = () => {
     const [riders, setRiders] = useState<Rider[]>([]);
     const [assignModalOpen, setAssignModalOpen] = useState<string | null>(null); // orderId
     const [isAssigning, setIsAssigning] = useState(false);
+    const [locations, setLocations] = useState<any[]>([]);
 
     useEffect(() => {
         fetchOrders();
         fetchRiders();
+        fetchLocations();
         const interval = setInterval(fetchOrders, 30000); // Poll every 30s
         return () => clearInterval(interval);
     }, []);
 
+    const fetchLocations = async () => {
+        try {
+            const data = await LocationService.getAllLocations();
+            setLocations(data);
+        } catch (error) {
+            console.error("Failed to fetch locations", error);
+        }
+    };
+
     const fetchOrders = async () => {
         try {
             const data = await OrderService.getAllOrders();
-            setOrders(data as Order[]);
+            setOrders(data);
         } catch (error) {
             console.error("Failed to fetch orders", error);
         } finally {
@@ -65,8 +76,8 @@ const ManageOrders: React.FC = () => {
     const fetchRiders = async () => {
         try {
             const data = await RiderService.getAllRiders();
-            const active = (data as Rider[]).filter((r) => r.status === 'active');
-            setRiders(active);
+            const activeRiders = data.filter((r: any) => r.status === 'active' || r.status === 'online');
+            setRiders(activeRiders);
         } catch (error) {
             console.error("Failed to fetch riders", error);
         }
@@ -75,7 +86,7 @@ const ManageOrders: React.FC = () => {
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
             // Optimistic update
-            setOrders(orders.map(order =>
+            setOrders(prev => prev.map(order =>
                 order.id === id ? { ...order, status: newStatus } : order
             ));
             await OrderService.updateOrderStatus(id, newStatus);
@@ -95,25 +106,32 @@ const ManageOrders: React.FC = () => {
             // 1. Calculate Dynamic Delivery Fee
             // Strategy: Check if address contains any known location name
             let deliveryFee = 15.00; // Default fallback
+            let foundLocationId = '';
+
             if (order.delivery_address) {
                 const foundLocation = locations.find(loc =>
                     order.delivery_address!.toLowerCase().includes(loc.name.toLowerCase())
                 );
                 if (foundLocation) {
                     deliveryFee = foundLocation.price;
+                    foundLocationId = foundLocation.id;
                 }
             }
 
             // 1. Create Delivery Record
+            const commissionAmount = calculateCommission(foundLocationId, deliveryFee, locations);
+            const riderEarning = calculateRiderEarning(deliveryFee, commissionAmount);
+            const commissionRate = deliveryFee > 0 ? commissionAmount / deliveryFee : 0;
+
             const deliveryData = {
                 orderId: order.id,
                 customerId: order.user_id,
                 pickupLocation: 'Goodies Lounge, Accra',
                 deliveryLocation: order.delivery_address || 'Unknown Address',
                 deliveryFee: deliveryFee,
-                commissionRate: 0.1,
-                commissionAmount: deliveryFee * 0.1,
-                riderEarning: deliveryFee * 0.9,
+                commissionRate: commissionRate,
+                commissionAmount: commissionAmount,
+                riderEarning: riderEarning,
                 verificationCode: generateVerificationCode(),
                 confirmationCode: generateCustomerConfirmationCode()
             };
@@ -166,7 +184,7 @@ const ManageOrders: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                     disabled={loading}
                 >
-                    <FaSync className={`${loading ? 'animate-spin' : ''}`} /> Refresh
+                    <FaSync className={`${loading ? 'animate-spin' : ''} `} /> Refresh
                 </button>
             </div>
 
@@ -176,10 +194,10 @@ const ManageOrders: React.FC = () => {
                     <button
                         key={status}
                         onClick={() => setFilterStatus(status)}
-                        className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${filterStatus === status
-                            ? 'bg-brand-dark text-white'
-                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                            }`}
+                        className={`px - 4 py - 2 rounded - full font - medium whitespace - nowrap transition - colors ${filterStatus === status
+                                ? 'bg-brand-dark text-white'
+                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                            } `}
                     >
                         {status}
                     </button>
@@ -200,7 +218,7 @@ const ManageOrders: React.FC = () => {
                 ) : filteredOrders.map((order) => {
                     // Helper: Format Items from JSONB
                     const itemsText = Array.isArray(order.items)
-                        ? order.items.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ')
+                        ? order.items.map((i: any) => `${i.name} x${i.quantity || 1} `).join(', ')
                         : 'Items data unavailable';
 
                     return (
@@ -208,7 +226,7 @@ const ManageOrders: React.FC = () => {
                             <div className="flex-grow">
                                 <div className="flex items-center gap-4 mb-2">
                                     <span className="font-bold text-lg text-gray-800">#{order.id.slice(0, 8)}...</span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
+                                    <span className={`px - 3 py - 1 rounded - full text - xs font - bold uppercase tracking - wide ${getStatusColor(order.status)} `}>
                                         {order.status.replace('_', ' ')}
                                     </span>
                                     <span className="text-sm text-gray-500">

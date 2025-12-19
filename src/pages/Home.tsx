@@ -97,24 +97,24 @@ const Home: React.FC = () => {
                 ))}
 
 
-                <div className="relative z-20 text-center px-4 max-w-5xl mx-auto pt-32">
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight animate-fade-in-up animation-delay-200 drop-shadow-2xl">
+                <div className="relative z-20 text-center px-4 max-w-5xl mx-auto pt-24 md:pt-32">
+                    <h1 className="text-3xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight animate-fade-in-up animation-delay-200 drop-shadow-2xl">
                         Taste the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-200">Passion</span><br />
                         in Every <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-red to-red-400">Bite</span>
                     </h1>
 
-                    <p className="text-base md:text-lg text-gray-100 mb-10 max-w-xl mx-auto font-light leading-relaxed animate-fade-in-up animation-delay-400 drop-shadow-lg bg-black/10 backdrop-blur-[2px] p-2 rounded-lg">
+                    <p className="text-base md:text-lg text-gray-100 mb-8 md:mb-10 max-w-xl mx-auto font-light leading-relaxed animate-fade-in-up animation-delay-400 drop-shadow-lg bg-black/10 backdrop-blur-[2px] p-2 rounded-lg">
                         Experience the finest local and continental dishes in an atmosphere of elegance, comfort, and culinary artistry.
                     </p>
 
-                    <div className="flex flex-col md:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-600">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center items-center animate-fade-in-up animation-delay-600">
                         <Link
                             to="/user/menu"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative px-8 py-4 bg-brand-red text-white text-lg font-bold rounded-full overflow-hidden shadow-lg shadow-brand-red/30 transition-all hover:scale-105 hover:shadow-brand-red/50"
+                            className="group relative px-6 py-3 md:px-8 md:py-4 bg-brand-red text-white text-base md:text-lg font-bold rounded-full overflow-hidden shadow-lg shadow-brand-red/30 transition-all hover:scale-105 hover:shadow-brand-red/50 w-full md:w-auto text-center"
                         >
-                            <span className="relative z-10 flex items-center gap-2">
+                            <span className="relative z-10 flex items-center justify-center gap-2">
                                 Order Food <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
                             </span>
                             <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-brand-red opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -124,7 +124,7 @@ const Home: React.FC = () => {
                             to="/user/reservations"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group px-8 py-4 bg-transparent border-2 border-white text-white text-lg font-bold rounded-full hover:bg-white hover:text-brand-dark transition-all hover:scale-105 backdrop-blur-sm"
+                            className="group px-6 py-3 md:px-8 md:py-4 bg-transparent border-2 border-white text-white text-base md:text-lg font-bold rounded-full hover:bg-white hover:text-brand-dark transition-all hover:scale-105 backdrop-blur-sm w-full md:w-auto text-center"
                         >
                             Book a Table
                         </Link>
@@ -138,7 +138,7 @@ const Home: React.FC = () => {
             </section >
 
             {/* Popular Items Section (Marquee Animation) */}
-            < section className="py-12 bg-gray-50 overflow-hidden" >
+            < section className="py-8 md:py-12 bg-gray-50 overflow-hidden" >
                 <div className="container mx-auto px-4 mb-10 text-center">
                     <span className="text-brand-red font-bold tracking-wider uppercase text-sm mb-2 block">Our Best Sellers</span>
                     <h2 className="text-3xl md:text-4xl font-heading font-bold text-brand-dark mb-4">Popular <span className="text-brand-red">Favorites</span></h2>
@@ -182,7 +182,7 @@ const Home: React.FC = () => {
             </section >
 
             {/* Testimonials Section */}
-            < section className="py-20 bg-white relative overflow-hidden" >
+            < section className="py-12 md:py-20 bg-white relative overflow-hidden" >
                 {/* Decorative Elements */}
                 < div className="absolute top-0 left-0 w-64 h-64 bg-brand-yellow/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" ></div >
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-red/5 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl"></div>
@@ -199,7 +199,7 @@ const Home: React.FC = () => {
                             { name: 'Sarah Doe', role: 'Regular Guest', text: 'A wonderful atmosphere for evening relaxation. The wine selection is exquisite and the staff always makes you feel like royalty.', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&q=80' },
                             { name: 'John Smith', role: 'Event Planner', text: 'Hosted my birthday party here and the service was impeccable. The team went above and beyond to ensure everything was perfect.', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&q=80' },
                         ].map((testimonial, index) => (
-                            <div key={index} className="bg-gray-50 p-8 rounded-3xl relative hover:-translate-y-2 transition-transform duration-300 border border-gray-100 shadow-sm hover:shadow-xl">
+                            <div key={index} className="bg-gray-50 p-6 md:p-8 rounded-3xl relative hover:-translate-y-2 transition-transform duration-300 border border-gray-100 shadow-sm hover:shadow-xl">
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2">
                                     <img src={testimonial.image} alt={testimonial.name} className="w-12 h-12 rounded-full border-4 border-white shadow-lg object-cover" />
                                 </div>
@@ -220,11 +220,11 @@ const Home: React.FC = () => {
             </section >
 
             {/* Features Section */}
-            < section className="py-20 bg-white text-brand-dark relative border-t border-gray-100" >
+            < section className="py-12 md:py-20 bg-white text-brand-dark relative border-t border-gray-100" >
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Feature 1 */}
-                        <div className="group p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
+                        <div className="group p-6 md:p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
                             <div className="w-16 h-16 bg-brand-red/10 text-brand-red rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                                 <FaUtensils size={28} />
                             </div>
@@ -238,7 +238,7 @@ const Home: React.FC = () => {
                         </div>
 
                         {/* Feature 2 */}
-                        <div className="group p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
+                        <div className="group p-6 md:p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
                             <div className="w-16 h-16 bg-brand-yellow/10 text-brand-yellow rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                                 <FaWineGlass size={28} />
                             </div>
@@ -252,7 +252,7 @@ const Home: React.FC = () => {
                         </div>
 
                         {/* Feature 3 */}
-                        <div className="group p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
+                        <div className="group p-6 md:p-8 text-center rounded-2xl hover:bg-gray-50 transition-colors duration-300 border border-gray-100 shadow-sm hover:shadow-md">
                             <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                                 <FaMotorcycle size={28} />
                             </div>

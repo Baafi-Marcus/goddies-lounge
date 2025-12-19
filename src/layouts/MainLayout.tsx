@@ -10,6 +10,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { currentUser, userProfile } = useAuth();
+    const { cartCount } = useCart();
     const location = useLocation();
 
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -26,7 +27,7 @@ const MainLayout: React.FC = () => {
         { name: 'Reservations', path: '/user/reservations', icon: <FaCalendarAlt /> },
         { name: 'Orders', path: '/user/orders', icon: <FaUtensils /> },
         { name: 'Profile', path: '/user/profile', icon: <FaUser /> },
-        { name: 'My Cart', path: '/user/cart', icon: <FaShoppingBag /> },
+        { name: 'My Cart', path: '/user/cart', icon: <FaShoppingBag />, count: cartCount },
     ];
 
     const isActive = (path: string) => location.pathname === path;
@@ -56,13 +57,18 @@ const MainLayout: React.FC = () => {
                             <Link
                                 key={link.name}
                                 to={link.path}
-                                className={`flex items-center gap-2 font-medium transition-colors duration-300 hover:text-brand-yellow ${isActive(link.path)
+                                className={`relative flex items-center gap-2 font-medium transition-colors duration-300 hover:text-brand-yellow ${isActive(link.path)
                                     ? (isTransparent ? 'text-brand-yellow font-bold' : 'text-brand-red font-bold')
                                     : (isTransparent ? 'text-white/90 hover:text-white' : 'text-gray-600 hover:text-brand-red')
                                     }`}
                             >
                                 {link.icon}
                                 <span>{link.name}</span>
+                                {(link as any).count !== undefined && (link as any).count > 0 && (
+                                    <span className="absolute -top-2 -right-3 bg-brand-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-bounce">
+                                        {(link as any).count}
+                                    </span>
+                                )}
                             </Link>
                         ))}
                     </nav>

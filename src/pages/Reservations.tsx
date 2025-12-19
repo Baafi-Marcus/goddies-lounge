@@ -46,7 +46,7 @@ const Reservations: React.FC = () => {
 
     // Fetch user reservations when switching to My Reservations tab
     useEffect(() => {
-        if (activeTab === 'my-reservations' && userProfile?.email) {
+        if (activeTab === 'my-reservations' && (userProfile?.email || userProfile?.phone)) {
             fetchMyReservations();
         }
     }, [activeTab, userProfile]);
@@ -54,7 +54,10 @@ const Reservations: React.FC = () => {
     const fetchMyReservations = async () => {
         setLoadingReservations(true);
         try {
-            const data = await ReservationService.getReservationsByEmail(userProfile.email);
+            const data = await ReservationService.getReservationsByUser(
+                userProfile?.email || '',
+                userProfile?.phone || ''
+            );
             setMyReservations(data);
         } catch (error) {
             console.error("Failed to fetch reservations", error);
@@ -133,7 +136,7 @@ const Reservations: React.FC = () => {
         today.setHours(0, 0, 0, 0);
         reservationDate.setHours(0, 0, 0, 0);
 
-        return reservationDate > today && (status === 'pending' || status === 'confirmed');
+        return reservationDate >= today && (status === 'pending' || status === 'accepted' || status === 'confirmed');
     };
 
     if (isSubmitted) {

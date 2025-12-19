@@ -6,7 +6,7 @@ import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 
 import { auth } from '../../services/firebase';
 
 const RiderProfile: React.FC = () => {
-    const { currentRider, logout } = useRider();
+    const { currentRider, logout, updateRider } = useRider();
     const navigate = useNavigate();
 
     // Settings panel toggle
@@ -50,9 +50,21 @@ const RiderProfile: React.FC = () => {
     };
 
     const handleUpdateProfile = async () => {
-        // TODO: Implement profile update with backend
-        showMessage('Profile updated successfully!', 'success');
-        setIsEditing(false);
+        if (!currentRider) return;
+
+        try {
+            await updateRider(currentRider.id, {
+                name: editName,
+                phone: editPhone,
+                vehicleType: editVehicleType,
+                registrationNumber: editVehicleNumber
+            });
+            showMessage('Profile updated successfully!', 'success');
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            showMessage('Failed to update profile. Please try again.', 'error');
+        }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {

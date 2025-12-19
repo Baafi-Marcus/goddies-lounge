@@ -32,16 +32,16 @@ const About: React.FC = () => {
                         <div className="md:w-1/2">
                             <h2 className="text-3xl font-heading font-bold mb-6 text-brand-dark">Our <span className="text-brand-red">Story</span></h2>
                             <p className="text-gray-600 mb-4 leading-relaxed">
-                                Founded in the heart of Akyem Asafo, Goddies Lounge & Wine Bar started with a simple mission: to bring people together through exceptional food and a warm atmosphere.
+                                Welcome to Goddies Lounge & Wine Bar!
                             </p>
                             <p className="text-gray-600 mb-6 leading-relaxed">
-                                What began as a small family kitchen has grown into a beloved local landmark, known for our signature Jollof, gourmet burgers, and an extensive collection of fine wines. We believe that every meal should be a celebration.
+                                At Goddies Lounge & Wine Bar, we are more than just a place to eat and drink – we are a vibrant hub for food lovers and wine enthusiasts alike. Located in the heart of Okyeman, our lounge is a perfect blend of cozy ambiance, great food, and exceptional service.
                             </p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
                                 <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
                                     <FaHistory className="text-brand-red text-3xl mx-auto mb-2" />
-                                    <h4 className="font-bold">Est. 2015</h4>
+                                    <h4 className="font-bold">Est. 2025</h4>
                                 </div>
                                 <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
                                     <FaUsers className="text-brand-yellow text-3xl mx-auto mb-2" />

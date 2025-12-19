@@ -12,8 +12,8 @@ export const RiderService = {
       SELECT
     r.id, r.registration_number as "registrationNumber", r.vehicle_type as "vehicleType",
       r.vehicle_number as "vehicleNumber", r.status,
-      0 as "totalDeliveries",
-      0 as "totalEarnings",
+      r.total_deliveries as "totalDeliveries",
+      r.total_earnings as "totalEarnings",
       r.current_balance as "currentBalance",
       u.full_name as name, u.phone, u.email 
       FROM riders r 
@@ -49,13 +49,29 @@ export const RiderService = {
   },
 
   async updateRider(id: string, updates: any) {
-    // Separate rider-specific fields from user fields could be cleaner, but for now assuming simple updates
-    // This is a simplified update
-    if (updates.status) await sql`UPDATE riders SET status = ${updates.status} WHERE id = ${id} `;
-    if (updates.currentBalance !== undefined) await sql`UPDATE riders SET current_balance = ${updates.currentBalance} WHERE id = ${id} `;
-    if (updates.totalDeliveries !== undefined) await sql`UPDATE riders SET total_deliveries = ${updates.totalDeliveries} WHERE id = ${id} `;
-    if (updates.totalEarnings !== undefined) await sql`UPDATE riders SET total_earnings = ${updates.totalEarnings} WHERE id = ${id} `;
-    if (updates.lastActive) { /* last_active column missing in schema, let's skip or add it later */ }
+    // Transaction to update both users and riders tables
+    await sql`BEGIN`;
+    try {
+      // 1. Update Rider specific fields
+      if (updates.status) await sql`UPDATE riders SET status = ${updates.status} WHERE id = ${id} `;
+      if (updates.currentBalance !== undefined) await sql`UPDATE riders SET current_balance = ${updates.currentBalance} WHERE id = ${id} `;
+      if (updates.totalDeliveries !== undefined) await sql`UPDATE riders SET total_deliveries = ${updates.totalDeliveries} WHERE id = ${id} `;
+      if (updates.totalEarnings !== undefined) await sql`UPDATE riders SET total_earnings = ${updates.totalEarnings} WHERE id = ${id} `;
+      if (updates.vehicleType) await sql`UPDATE riders SET vehicle_type = ${updates.vehicleType} WHERE id = ${id} `;
+      if (updates.registrationNumber) await sql`UPDATE riders SET registration_number = ${updates.registrationNumber} WHERE id = ${id} `;
+      if (updates.vehicleNumber) await sql`UPDATE riders SET vehicle_number = ${updates.vehicleNumber} WHERE id = ${id} `;
+
+      // 2. Update User fields (Name, Phone)
+      if (updates.name || updates.phone) {
+        if (updates.name) await sql`UPDATE users SET full_name = ${updates.name} WHERE id = ${id}`;
+        if (updates.phone) await sql`UPDATE users SET phone = ${updates.phone} WHERE id = ${id}`;
+      }
+
+      await sql`COMMIT`;
+    } catch (e) {
+      await sql`ROLLBACK`;
+      throw e;
+    }
   },
 
   async deleteRider(id: string) {
@@ -127,11 +143,35 @@ export const DeliveryService = {
   },
 
   async pickupDelivery(deliveryId: string) {
-    await sql`
-      UPDATE deliveries 
-      SET status = 'in_transit', picked_up_at = NOW() 
-      WHERE id = ${deliveryId}
-    `;
+    // Transaction to update both delivery and order
+    await sql`BEGIN`;
+    try {
+      // 1. Get Order ID
+      const deliveryResult = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
+      if (deliveryResult && deliveryResult.length > 0) {
+        const orderId = deliveryResult[0].order_id;
+
+        // 2. Update Delivery
+        await sql`
+            UPDATE deliveries 
+            SET status = 'in_transit', picked_up_at = NOW() 
+            WHERE id = ${deliveryId}
+        `;
+
+        // 3. Update Order Status
+        if (orderId) {
+          await sql`
+                UPDATE orders
+                SET status = 'in_transit'
+                WHERE id = ${orderId}
+            `;
+        }
+      }
+      await sql`COMMIT`;
+    } catch (e) {
+      await sql`ROLLBACK`;
+      throw e;
+    }
   },
 
   async completeDelivery(deliveryId: string, riderId: string, earning: number) {
@@ -159,12 +199,14 @@ export const DeliveryService = {
             WHERE id = ${riderId}
           `;
 
-        // 4. Update Order Status (Explicit Cast)
-        await sql`
-            UPDATE orders
-            SET status = 'delivered'
-            WHERE id::text = ${orderId}::text
-          `;
+        // 4. Update Order Status
+        if (orderId) {
+          await sql`
+                UPDATE orders
+                SET status = 'delivered'
+                WHERE id = ${orderId}
+            `;
+        }
       }
 
       await sql`COMMIT`;
@@ -472,7 +514,7 @@ export const ReservationService = {
                   table_id UUID,
                   table_name VARCHAR(100),
                   notes TEXT,
-                  status VARCHAR(50) DEFAULT 'confirmed',
+                  status VARCHAR(50) DEFAULT 'pending',
                   created_at TIMESTAMP DEFAULT NOW()
               )
           `;
@@ -487,8 +529,8 @@ export const ReservationService = {
   async createReservation(data: any) {
     await this.ensureTableExists();
     await sql`
-            INSERT INTO reservations (name, email, phone, date, time, guests, table_id, table_name, notes)
-            VALUES (${data.name}, ${data.email}, ${data.phone}, ${data.date}, ${data.time}, ${data.guests}, ${data.tableId || null}, ${data.tableName || null}, ${data.notes || ''})
+            INSERT INTO reservations (name, email, phone, date, time, guests, table_id, table_name, notes, status)
+            VALUES (${data.name}, ${data.email}, ${data.phone}, ${data.date}, ${data.time}, ${data.guests}, ${data.tableId || null}, ${data.tableName || null}, ${data.notes || ''}, 'pending')
         `;
   },
 
@@ -510,6 +552,27 @@ export const ReservationService = {
       SELECT * FROM reservations 
       WHERE email = ${email} 
       ORDER BY date DESC, time DESC
+    `;
+  },
+
+  async getReservationsByUser(email?: string, phone?: string) {
+    await this.ensureTableExists();
+    if (!email && !phone) return [];
+
+    return await sql`
+      SELECT * FROM reservations 
+      WHERE (length(${email || ''}) > 0 AND email = ${email || ''}) 
+         OR (length(${phone || ''}) > 0 AND phone = ${phone || ''})
+      ORDER BY date DESC, time DESC
+    `;
+  },
+
+  async acceptReservation(id: string) {
+    await this.ensureTableExists();
+    await sql`
+      UPDATE reservations 
+      SET status = 'accepted' 
+      WHERE id = ${id}
     `;
   },
 
@@ -540,3 +603,113 @@ export const ReservationService = {
     `;
   }
 };
+
+export const LocationService = {
+  async ensureTableExists() {
+    await sql`
+      CREATE TABLE IF NOT EXISTS locations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        price DECIMAL(10, 2) NOT NULL,
+        active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  },
+
+  async getAllLocations() {
+    await this.ensureTableExists();
+    return await sql`
+      SELECT * FROM locations 
+      WHERE active = TRUE 
+      ORDER BY name ASC
+    `;
+  },
+
+  async addLocation(name: string, price: number) {
+    await this.ensureTableExists();
+    return await sql`
+      INSERT INTO locations (name, price)
+      VALUES (${name}, ${price})
+      RETURNING *
+    `;
+  },
+
+  async updateLocation(id: string, name: string, price: number) {
+    await this.ensureTableExists();
+    return await sql`
+      UPDATE locations 
+      SET name = ${name}, price = ${price}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+  },
+
+  async deleteLocation(id: string) {
+    await this.ensureTableExists();
+    return await sql`
+      UPDATE locations 
+      SET active = FALSE 
+      WHERE id = ${id}
+    `;
+  },
+
+  async seedLocations() {
+    await this.ensureTableExists();
+    const existing = await this.getAllLocations();
+    if (existing.length > 0) return; // Already seeded
+
+    const initialLocations = [
+      { name: 'Amanfrom', price: 20 },
+      { name: 'Apedwa', price: 25 },
+      { name: 'Asafo', price: 20 },
+      { name: 'Asiakwa', price: 25 },
+      { name: 'Maase', price: 20 },
+      { name: 'Apedwa Nkwanta', price: 25 },
+      { name: 'Adadientam', price: 20 },
+      { name: 'Addo Nkwanta', price: 25 },
+      { name: 'Adwumako', price: 25 },
+      { name: 'Afiesa', price: 20 },
+      { name: 'Agyapoma', price: 25 },
+      { name: 'Ahwenease', price: 20 },
+      { name: 'Akim Apapam', price: 30 },
+      { name: 'Akooko', price: 25 },
+      { name: 'Akwadum', price: 20 },
+      { name: 'Ayem Adukrom', price: 30 },
+      { name: 'Birim Amona', price: 30 },
+      { name: 'Nkronso', price: 20 },
+      { name: 'Ntabea', price: 25 },
+      { name: 'Odumase', price: 20 },
+      { name: 'Owuratwum', price: 25 },
+      { name: 'Pano', price: 20 },
+      { name: 'Potrase', price: 20 },
+      { name: 'Sagyimase', price: 25 },
+      { name: 'Tete', price: 20 },
+      { name: 'Wirekyiren Amanforo', price: 30 },
+    ];
+
+    for (const loc of initialLocations) {
+      await this.addLocation(loc.name, loc.price);
+    }
+  },
+
+  async cleanupDuplicateLocations() {
+    await this.ensureTableExists();
+    // Keep the one with the LATEST created_at or ID (to keep recent edits if any). 
+    // Actually typically we keep the oldest, but here it doesn't matter much if they are identical.
+    // Let's keep the one with MIN id (oldest) to be stable.
+    await sql`
+      DELETE FROM locations
+      WHERE id IN (
+        SELECT id
+        FROM (
+          SELECT id,
+            ROW_NUMBER() OVER (PARTITION BY name ORDER BY id ASC) as row_num
+          FROM locations
+        ) t
+        WHERE t.row_num > 1
+      )
+    `;
+  }
+};
+

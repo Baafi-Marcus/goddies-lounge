@@ -3,7 +3,7 @@ import { useForm, useWatch, type SubmitHandler, Controller } from 'react-hook-fo
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useCart } from '../context/CartContext';
-import { locations } from '../data/locations';
+import { LocationService } from '../services/neon';
 import ScrollTimePicker from '../components/ScrollTimePicker';
 import { FaTruck, FaStore, FaCreditCard, FaMoneyBillWave, FaArrowLeft, FaCheckCircle, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -52,6 +52,20 @@ const Checkout: React.FC = () => {
     const location = useLocation();
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState(1);
+    const [locations, setLocations] = useState<any[]>([]);
+
+    // Fetch locations dynamically
+    useEffect(() => {
+        const loadLocations = async () => {
+            try {
+                const data = await LocationService.getAllLocations();
+                setLocations(data);
+            } catch (error) {
+                console.error("Failed to load locations", error);
+            }
+        };
+        loadLocations();
+    }, []);
 
     // Redirect if cart is empty or not logged in
     useEffect(() => {
@@ -274,7 +288,7 @@ const Checkout: React.FC = () => {
                                                     <option value="">-- Choose your town --</option>
                                                     {locations.map(loc => (
                                                         <option key={loc.id} value={loc.id}>
-                                                            {loc.name} - (₵{loc.price.toFixed(2)})
+                                                            {loc?.name || 'Unknown'} - (₵{Number(loc?.price || 0).toFixed(2)})
                                                         </option>
                                                     ))}
                                                 </select>

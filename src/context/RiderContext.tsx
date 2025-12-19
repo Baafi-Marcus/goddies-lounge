@@ -102,24 +102,23 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const login = async (registrationNumber: string, _password: string): Promise<boolean> => {
         try {
-            // 1. Get rider details including user info
-            const riderText = await RiderService.getRiderByRegistration(registrationNumber);
+            // 1. Get rider details including user info via Service
+            const riderData = await RiderService.getRiderByRegistration(registrationNumber);
 
-            // 2. Mock password check (Since we don't expose password_hash for security, 
-            // typically detailed auth should be done via proper API. 
-            // For this direct DB demo, we will check against the result if we extracted hash, 
-            // OR simpler: we rely on data existence + local check if we had the hash.
-            // But wait, getAllRiders JOIN doesn't select password_hash.
-            // Let's assume for MVP: if rider exists, we log them in. 
-            // TODO: Implement proper auth service.
+            if (riderData) {
+                // TODO: Implement proper password verification here if hash is available
+                // For now, if the rider exists with this registration number, we log them in.
 
-            if (riderText) {
                 // @ts-ignore
-                setCurrentRider(riderText);
+                setCurrentRider(riderData);
+                // Also save to local storage for persistence
+                localStorage.setItem('currentRider', JSON.stringify(riderData));
                 return true;
+            } else {
+                console.error("Rider not found with registration:", registrationNumber);
             }
         } catch (e) {
-            console.error(e);
+            console.error("Login Error:", e);
         }
         return false;
     };

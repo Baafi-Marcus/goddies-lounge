@@ -25,10 +25,21 @@ const ManageReservations: React.FC = () => {
         }
     };
 
+    const handleAccept = async (id: string) => {
+        try {
+            const { ReservationService } = await import('../../services/neon');
+            await ReservationService.acceptReservation(id);
+            fetchReservations(); // Refresh list
+        } catch (error) {
+            console.error("Failed to accept reservation", error);
+            alert("Failed to accept reservation");
+        }
+    };
+
     const handleConfirm = async (id: string) => {
         try {
             const { ReservationService } = await import('../../services/neon');
-            await ReservationService.confirmReservation(id);
+            await ReservationService.confirmReservation(id); // Sets to 'completed'
             fetchReservations(); // Refresh list
         } catch (error) {
             console.error("Failed to confirm reservation", error);
@@ -54,20 +65,22 @@ const ManageReservations: React.FC = () => {
         today.setHours(0, 0, 0, 0);
         const resDate = new Date(reservationDate);
         resDate.setHours(0, 0, 0, 0);
-        return resDate <= today; // Can only take action on or after the date
+        return resDate >= today; // Allow action for today and future dates
     };
 
     const getStatusBadgeClass = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'completed':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-800 text-white'; // Dark green for final completion
+            case 'accepted':
+                return 'bg-green-100 text-green-800'; // Light green for accepted
             case 'no-show':
                 return 'bg-red-100 text-red-800';
             case 'cancelled':
                 return 'bg-gray-100 text-gray-800';
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'confirmed':
+            case 'confirmed': // Legacy
             default:
                 return 'bg-blue-100 text-blue-800';
         }
@@ -309,22 +322,36 @@ const ManageReservations: React.FC = () => {
                                             {res.notes || '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {canTakeAction(res.date) && (res.status === 'pending' || res.status === 'confirmed') && (
-                                                <div className="flex gap-2">
+                                            <div className="flex gap-2">
+                                                {/* Pending -> Accept */}
+                                                {res.status === 'pending' && (
                                                     <button
-                                                        onClick={() => handleConfirm(res.id)}
-                                                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-xs font-medium"
+                                                        onClick={() => handleAccept(res.id)}
+                                                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium"
                                                     >
-                                                        Confirm
+                                                        Accept
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleNoShow(res.id)}
-                                                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-medium"
-                                                    >
-                                                        No-Show
-                                                    </button>
-                                                </div>
-                                            )}
+                                                )}
+
+                                                {/* Accepted -> Confirm (Arrived) or No-Show */}
+                                                {res.status === 'accepted' && canTakeAction(res.date) && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleConfirm(res.id)}
+                                                            className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-xs font-medium"
+                                                            title="Mark as Arrived/Completed"
+                                                        >
+                                                            Confirm Arrival
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleNoShow(res.id)}
+                                                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-medium"
+                                                        >
+                                                            No-Show
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
