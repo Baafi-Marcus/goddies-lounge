@@ -143,6 +143,9 @@ export const MenuService = {
       const { data } = await api.get('/menu');
       if (!Array.isArray(data)) {
         console.error('API Error: Expected array for /menu but got:', typeof data);
+        if (typeof data === 'string') {
+          console.error('Response snippet:', data.substring(0, 200));
+        }
         return [];
       }
       return data;
