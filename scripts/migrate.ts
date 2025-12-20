@@ -1,15 +1,18 @@
 import { neon } from '@neondatabase/serverless';
 
-const DATABASE_URL = "postgresql://neondb_owner:npg_T8uw4AYeVtls@ep-floral-pond-ade94g00-pooler.c-2.us-east-1.aws.neon.tech/goddies?sslmode=require";
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const DATABASE_URL = process.env.VITE_DATABASE_URL;
 const sql = neon(DATABASE_URL);
 
 async function runMigrations() {
-    console.log('Starting migrations...');
+  console.log('Starting migrations...');
 
-    try {
-        // 1. Users Table (Core)
-        console.log('Creating users table...');
-        await sql`
+  try {
+    // 1. Users Table (Core)
+    console.log('Creating users table...');
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -21,9 +24,9 @@ async function runMigrations() {
       );
     `;
 
-        // 2. Riders Table (Extension)
-        console.log('Creating riders table...');
-        await sql`
+    // 2. Riders Table (Extension)
+    console.log('Creating riders table...');
+    await sql`
       CREATE TABLE IF NOT EXISTS riders (
         id UUID PRIMARY KEY REFERENCES users(id),
         registration_number VARCHAR(20) UNIQUE NOT NULL,
@@ -36,9 +39,9 @@ async function runMigrations() {
       );
     `;
 
-        // 3. Deliveries Table
-        console.log('Creating deliveries table...');
-        await sql`
+    // 3. Deliveries Table
+    console.log('Creating deliveries table...');
+    await sql`
       CREATE TABLE IF NOT EXISTS deliveries (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         order_id VARCHAR(50) NOT NULL,
@@ -66,10 +69,10 @@ async function runMigrations() {
       );
     `;
 
-        console.log('✅ Migrations completed successfully!');
-    } catch (error) {
-        console.error('❌ Migration failed:', error);
-    }
+    console.log('✅ Migrations completed successfully!');
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+  }
 }
 
 runMigrations();
