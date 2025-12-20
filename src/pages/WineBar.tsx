@@ -4,6 +4,7 @@ import type { MenuItem } from '../data/menuData'; // Reusing MenuItem type
 import { useCart } from '../context/CartContext';
 import { FaPlus, FaMinus, FaTimes, FaShoppingCart, FaSpinner } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const WineBar: React.FC = () => {
     const { addToCart } = useCart();
@@ -78,6 +79,11 @@ const WineBar: React.FC = () => {
 
     return (
         <div className="animate-fade-in">
+            <SEO
+                title="The Wine Bar"
+                description="Explore our curated selection of premium wines, spirits, and cocktails at Goodies Lounge. Perfect for evening relaxation."
+                keywords="wine bar, spirits, cocktails, night life, Asafo Akim, premium drinks"
+            />
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-heading font-bold text-brand-dark mb-4">The Wine Bar</h1>
                 <p className="text-gray-600 max-w-2xl mx-auto">

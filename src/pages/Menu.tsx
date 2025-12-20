@@ -4,6 +4,7 @@ import type { MenuItem } from '../data/menuData'; // Keep type
 import { useCart } from '../context/CartContext';
 import { FaPlus, FaMinus, FaTimes, FaShoppingCart, FaUtensils, FaWineGlass, FaSpinner } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const Menu: React.FC = () => {
     const { addToCart } = useCart();
@@ -26,6 +27,12 @@ const Menu: React.FC = () => {
         const fetchItems = async () => {
             try {
                 const allItems = await MenuService.getAllItems();
+
+                if (!Array.isArray(allItems)) {
+                    console.error('Menu items is not an array:', allItems);
+                    setLoading(false);
+                    return;
+                }
 
                 // Split into Kitchen vs Wine based on Category
                 // Assuming "Wines", "Champagne", "Spirits", "Local", "Red Wine", "White Wine" are drinks
@@ -97,6 +104,11 @@ const Menu: React.FC = () => {
 
     return (
         <div className="animate-fade-in pb-20">
+            <SEO
+                title="Our Menu"
+                description="Browse our delicious selection of local and continental dishes. Order online for fast delivery in Asafo Akim."
+                keywords="food menu, Ghanaian food, Jollof, delivery, lunch, dinner"
+            />
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-heading font-bold text-brand-dark mb-4">Our Selection</h1>
 

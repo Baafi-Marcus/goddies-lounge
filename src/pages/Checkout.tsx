@@ -124,7 +124,7 @@ const Checkout: React.FC = () => {
 
     // Calculate Dynamic Delivery Fee
     const deliveryFee = orderType === 'delivery' && locationId
-        ? locations.find(l => l.id === locationId)?.price || 0
+        ? Number(locations.find(l => l.id === locationId)?.price || 0)
         : 0;
 
     const totalAmount = cartTotal + deliveryFee;

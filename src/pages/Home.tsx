@@ -6,8 +6,73 @@ import { MenuService } from '../services/neon';
 import type { MenuItem } from '../data/menuData';
 import heroVideo1 from '../assets/hero-video-1.mp4';
 import heroVideo2 from '../assets/hero-video-2.mp4';
+import SEO from '../components/SEO';
+import StructuredData from '../components/StructuredData';
 
 const Home: React.FC = () => {
+    const restaurantSchema = {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "Goodies Lounge and Wine Bar",
+        "image": "https://goodieslounge.com/logo.jpg",
+        "url": "https://goodieslounge.com",
+        "telephone": "+233555000000",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Asafo Akim",
+            "addressLocality": "Kibi",
+            "addressRegion": "Eastern Region",
+            "postalCode": "00233",
+            "addressCountry": "GH"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "6.123456",
+            "longitude": "-0.456789"
+        },
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday"
+                ],
+                "opens": "10:00",
+                "closes": "23:00"
+            }
+        ],
+        "menu": "https://goodieslounge.com/user/menu",
+        "servesCuisine": [
+            "Ghanaian",
+            "Continental",
+            "African"
+        ],
+        "priceRange": "GH₵₵",
+        "hasMenu": "https://goodieslounge.com/user/menu",
+        "potentialAction": {
+            "@type": "OrderAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://goodieslounge.com/user/menu",
+                "inLanguage": "en-US",
+                "actionPlatform": [
+                    "http://schema.org/DesktopWebPlatform",
+                    "http://schema.org/MobileWebPlatform",
+                    "http://schema.org/IOSPlatform",
+                    "http://schema.org/AndroidPlatform"
+                ]
+            },
+            "deliveryMethod": [
+                "http://purl.org/goodrelations/v1#DeliveryModeOwnFleet"
+            ]
+        }
+    };
+
     const [currentVideo, setCurrentVideo] = useState(0);
     const [isYoutubeError, setIsYoutubeError] = useState(false);
     const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
@@ -38,6 +103,12 @@ const Home: React.FC = () => {
 
     return (
         <div className="animate-fade-in font-sans">
+            <SEO
+                title="Home"
+                description="Experience the finest local and continental dishes at Goodies Lounge and Wine Bar in Asafo Akim. Premium food, drinks, and atmosphere."
+                keywords="restaurant, lounge, wine bar, Asafo Akim, food delivery, cocktails, Ghanaian cuisine"
+            />
+            <StructuredData data={restaurantSchema} />
             {/* Hero Section */}
             <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-black">
                 {/* YouTube Main Video */}
@@ -64,7 +135,8 @@ const Home: React.FC = () => {
                                             rel: 0,
                                             iv_load_policy: 3,
                                             modestbranding: 1,
-                                            disablekb: 1
+                                            disablekb: 1,
+                                            origin: window.location.origin
                                         }
                                     }
                                 }}
@@ -152,7 +224,7 @@ const Home: React.FC = () => {
 
                     <div className="flex animate-marquee gap-6 w-max hover:pause px-4">
                         {/* Showing dynamically fetched items */}
-                        {featuredItems.map((item, index) => (
+                        {Array.isArray(featuredItems) && featuredItems.map((item, index) => (
                             <div key={`${item.id}-${index}`} className="w-72 bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden flex-shrink-0 border border-gray-100 transform transition-all duration-300 hover:-translate-y-1 group">
                                 <div className="h-48 overflow-hidden relative">
                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { FaUserFriends, FaCheckCircle, FaChair, FaLock, FaCalendarAlt, FaClock, FaUsers, FaTimes } from 'react-icons/fa';
+import SEO from '../components/SEO';
 import { useTable, type Table } from '../context/TableContext';
 import { useAuth } from '../context/AuthContext';
 import ScrollTimePicker from '../components/ScrollTimePicker';
@@ -190,6 +191,11 @@ const Reservations: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 animate-fade-in">
+            <SEO
+                title="Book a Table"
+                description="Make a reservation at Goodies Lounge & Wine Bar. Select your favorite table from our floor plan and enjoy a premium dining experience."
+                keywords="reservation, book table, dining, lounge reservation, table booking"
+            />
             <div className="container mx-auto px-4">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl md:text-5xl font-heading font-bold text-brand-dark mb-4">Reservations</h1>

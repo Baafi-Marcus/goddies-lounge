@@ -1,12 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaWineGlassAlt, FaUtensils, FaStar } from 'react-icons/fa';
+import SEO from '../components/SEO';
 import jollofRice from '../assets/jollof-rice.jpg';
 import shawarmaChicken from '../assets/shawarma-chicken.jpg';
 
 const PublicMenu: React.FC = () => {
     return (
         <div className="bg-white">
+            <SEO
+                title="Signature Selection"
+                description="Experience culinary excellence at Goodies Lounge. Explore our signature Jollof, gourmet shawarma, and curated wine list."
+                keywords="culinary excellence, signature dishes, Kwame Mensah, gourmet food, fine dining"
+            />
             {/* Hero Section */}
             <div className="relative h-[60vh] bg-brand-dark flex items-center justify-center text-center px-4">
                 <div className="absolute inset-0 bg-black/50 z-10"></div>

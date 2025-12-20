@@ -1,9 +1,15 @@
 import React from 'react';
 import { FaHistory, FaUsers, FaAward } from 'react-icons/fa';
+import SEO from '../components/SEO';
 
 const About: React.FC = () => {
     return (
         <div className="bg-gray-50 min-h-screen animate-fade-in">
+            <SEO
+                title="About Us"
+                description="Learn the story behind Goodies Lounge & Wine Bar. Established in 2025, we serve over 50k guests with award-winning hospitality."
+                keywords="restaurant history, about us, Goodies Lounge story, Okyeman hospitality"
+            />
             {/* Hero Section */}
             <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-black/60 z-10"></div>

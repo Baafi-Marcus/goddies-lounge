@@ -1,4 +1,9 @@
 import { neon } from '@neondatabase/serverless';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api'
+});
 
 // TODO: Replace with your Neon connection string
 const DATABASE_URL = import.meta.env.VITE_DATABASE_URL;
@@ -8,240 +13,83 @@ const sql = neon(DATABASE_URL);
 // Rider Service
 export const RiderService = {
   async getAllRiders() {
-    return await sql`
-      SELECT
-    r.id, r.registration_number as "registrationNumber", r.vehicle_type as "vehicleType",
-      r.vehicle_number as "vehicleNumber", r.status,
-      r.total_deliveries as "totalDeliveries",
-      r.total_earnings as "totalEarnings",
-      r.current_balance as "currentBalance",
-      u.full_name as name, u.phone, u.email 
-      FROM riders r 
-      JOIN users u ON r.id = u.id
-      `;
+    const { data } = await api.get('/riders');
+    return data;
   },
 
   async getRiderById(id: string) {
-    const riders = await sql`SELECT r.*, u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.id = ${id} `;
-    return riders[0];
+    const { data } = await api.get(`/riders?id=${id}`);
+    return data;
   },
 
   async getRiderByRegistration(regNum: string) {
-    const riders = await sql`SELECT r.*, u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.registration_number = ${regNum} `;
-    return riders[0];
+    const { data } = await api.get(`/riders?registrationNumber=${regNum}`);
+    return data;
   },
 
   async createRider(riderData: any) {
-    // 1. Create User
-    const [user] = await sql`
-      INSERT INTO users(email, password_hash, role, full_name, phone)
-    VALUES(${riderData.email}, ${riderData.password}, 'rider', ${riderData.name}, ${riderData.phone})
-      RETURNING id
-      `;
-
-    // 2. Create Rider Profile
-    await sql`
-      INSERT INTO riders(id, registration_number, vehicle_type, vehicle_number, status)
-    VALUES(${user.id}, ${riderData.registrationNumber}, ${riderData.vehicleType}, ${riderData.vehicleNumber}, ${riderData.status || 'pending'})
-    `;
-
-    return user.id;
+    const { data } = await api.post('/riders', riderData);
+    return data;
   },
 
   async updateRider(id: string, updates: any) {
-    // Transaction to update both users and riders tables
-    await sql`BEGIN`;
-    try {
-      // 1. Update Rider specific fields
-      if (updates.status) await sql`UPDATE riders SET status = ${updates.status} WHERE id = ${id} `;
-      if (updates.currentBalance !== undefined) await sql`UPDATE riders SET current_balance = ${updates.currentBalance} WHERE id = ${id} `;
-      if (updates.totalDeliveries !== undefined) await sql`UPDATE riders SET total_deliveries = ${updates.totalDeliveries} WHERE id = ${id} `;
-      if (updates.totalEarnings !== undefined) await sql`UPDATE riders SET total_earnings = ${updates.totalEarnings} WHERE id = ${id} `;
-      if (updates.vehicleType) await sql`UPDATE riders SET vehicle_type = ${updates.vehicleType} WHERE id = ${id} `;
-      if (updates.registrationNumber) await sql`UPDATE riders SET registration_number = ${updates.registrationNumber} WHERE id = ${id} `;
-      if (updates.vehicleNumber) await sql`UPDATE riders SET vehicle_number = ${updates.vehicleNumber} WHERE id = ${id} `;
-
-      // 2. Update User fields (Name, Phone)
-      if (updates.name || updates.phone) {
-        if (updates.name) await sql`UPDATE users SET full_name = ${updates.name} WHERE id = ${id}`;
-        if (updates.phone) await sql`UPDATE users SET phone = ${updates.phone} WHERE id = ${id}`;
-      }
-
-      await sql`COMMIT`;
-    } catch (e) {
-      await sql`ROLLBACK`;
-      throw e;
-    }
+    const { data } = await api.patch('/riders', { id, ...updates });
+    return data;
   },
 
   async deleteRider(id: string) {
-    await sql`DELETE FROM riders WHERE id = ${id} `;
-    await sql`DELETE FROM users WHERE id = ${id} `;
+    // Note: API implementation for DELETE riders is missing, would add if needed
+    // For now, we can use status = 'deleted' via update
+    return this.updateRider(id, { status: 'deleted' });
   }
 };
 
 // Delivery Service
 export const DeliveryService = {
   async getAllDeliveries() {
-    return await sql`
-    SELECT
-    d.id, d.order_id as "orderId", d.customer_id as "customerId",
-      d.pickup_location as "pickupLocation", d.delivery_location as "location", d.delivery_location as "deliveryAddress",
-      d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
-      d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
-      0 as "driverTip", d.status, d.created_at as "createdAt",
-      d.rider_id as "riderId", d.verification_code as "verificationCode",
-      d.confirmation_code as "customerConfirmationCode", NULL as "pickupTime",
-      d.picked_up_at as "pickedUpAt", d.delivered_at as "deliveredAt",
-      u.full_name as "customerName",
-      u.phone as "customerPhone",
-      o.total_amount as "orderTotal"
-      FROM deliveries d 
-      LEFT JOIN users u ON d.customer_id::text = u.id::text
-      LEFT JOIN orders o ON d.order_id::text = o.id::text
-      ORDER BY d.created_at DESC
-      `;
+    const { data } = await api.get('/deliveries');
+    return data;
   },
 
   async getDeliveriesByCustomerId(customerId: string) {
-    return await sql`
-    SELECT * FROM deliveries 
-      WHERE customer_id = ${customerId}
-      ORDER BY created_at DESC
-      `;
+    const { data } = await api.get(`/deliveries?customerId=${customerId}`);
+    return data;
   },
 
   async getDeliveriesByRiderId(riderId: string) {
-    return await sql`
-    SELECT * FROM deliveries 
-      WHERE rider_id = ${riderId}
-      ORDER BY created_at DESC
-      `;
+    const { data } = await api.get(`/deliveries?riderId=${riderId}`);
+    return data;
   },
 
   async createDelivery(deliveryData: any) {
-    return await sql`
-      INSERT INTO deliveries(
-        order_id, customer_id, pickup_location, delivery_location,
-        delivery_fee, commission_rate, commission_amount, rider_earning,
-        status, verification_code, confirmation_code
-      ) VALUES(
-        ${deliveryData.orderId}, ${deliveryData.customerId}, ${deliveryData.pickupLocation}, ${deliveryData.deliveryLocation},
-        ${deliveryData.deliveryFee}, ${deliveryData.commissionRate}, ${deliveryData.commissionAmount}, ${deliveryData.riderEarning},
-        'pending', ${deliveryData.verificationCode}, ${deliveryData.confirmationCode}
-      )
-    RETURNING *
-      `;
+    const { data } = await api.post('/deliveries', deliveryData);
+    return data;
   },
 
   async assignRider(deliveryId: string, riderId: string) {
-    await sql`
-      UPDATE deliveries 
-      SET rider_id = ${riderId}, status = 'assigned', assigned_at = NOW() 
-      WHERE id = ${deliveryId}
-    `;
+    await api.patch('/deliveries', { action: 'assign', deliveryId, riderId });
   },
 
   async pickupDelivery(deliveryId: string) {
-    // Transaction to update both delivery and order
-    await sql`BEGIN`;
-    try {
-      // 1. Get Order ID
-      const deliveryResult = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
-      if (deliveryResult && deliveryResult.length > 0) {
-        const orderId = deliveryResult[0].order_id;
-
-        // 2. Update Delivery
-        await sql`
-            UPDATE deliveries 
-            SET status = 'in_transit', picked_up_at = NOW() 
-            WHERE id = ${deliveryId}
-        `;
-
-        // 3. Update Order Status
-        if (orderId) {
-          await sql`
-                UPDATE orders
-                SET status = 'in_transit'
-                WHERE id = ${orderId}
-            `;
-        }
-      }
-      await sql`COMMIT`;
-    } catch (e) {
-      await sql`ROLLBACK`;
-      throw e;
-    }
+    await api.patch('/deliveries', { action: 'pickup', deliveryId });
   },
 
   async completeDelivery(deliveryId: string, riderId: string, earning: number) {
-    // Transaction-like atomic update
-    await sql`BEGIN`;
-    try {
-      // 1. Get Order ID first to ensure we target the right row
-      const deliveryResult = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
-      if (deliveryResult && deliveryResult.length > 0) {
-        const orderId = deliveryResult[0].order_id;
-
-        // 2. Update Delivery
-        await sql`
-            UPDATE deliveries 
-            SET status = 'delivered', delivered_at = NOW() 
-            WHERE id = ${deliveryId}
-          `;
-
-        // 3. Update Rider Stats
-        await sql`
-            UPDATE riders 
-            SET total_deliveries = total_deliveries + 1,
-            total_earnings = total_earnings + ${earning},
-            current_balance = current_balance + ${earning}
-            WHERE id = ${riderId}
-          `;
-
-        // 4. Update Order Status
-        if (orderId) {
-          await sql`
-                UPDATE orders
-                SET status = 'delivered'
-                WHERE id = ${orderId}
-            `;
-        }
-      }
-
-      await sql`COMMIT`;
-      return true;
-    } catch (e) {
-      await sql`ROLLBACK`;
-      throw e;
-    }
+    await api.patch('/deliveries', { action: 'complete', deliveryId, riderId, earning });
+    return true;
   },
 
   async getDeliveryWithRider(orderId: string) {
-    const results = await sql`
-      SELECT 
-       d.id, d.order_id as "orderId", d.customer_id as "customerId",
-       d.pickup_location as "pickupLocation", d.delivery_location as "location", d.delivery_location as "deliveryAddress",
-       d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
-       d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
-       d.status, d.created_at as "createdAt", d.picked_up_at as "pickedUpAt", d.delivered_at as "deliveredAt",
-       d.verification_code as "verificationCode", d.confirmation_code as "customerConfirmationCode",
-        r.vehicle_number, r.vehicle_type,
-        u.full_name as rider_name, u.phone as rider_phone
-      FROM deliveries d
-      LEFT JOIN riders r ON d.rider_id = r.id
-      LEFT JOIN users u ON r.id = u.id
-      WHERE d.order_id = ${orderId}
-    `;
-    return results[0];
+    const { data } = await api.get(`/deliveries?orderId=${orderId}`);
+    return data;
   }
 };
 
 // User Service (Authentication & Profile)
 export const UserService = {
   async getUserByFirebaseUid(firebaseUid: string) {
-    const users = await sql`SELECT * FROM users WHERE firebase_uid = ${firebaseUid} `;
-    return users[0];
+    const { data } = await api.get(`/users?firebaseUid=${firebaseUid}`);
+    return data;
   },
 
   async createUser(userData: {
@@ -251,29 +99,17 @@ export const UserService = {
     fullName?: string | null;
     role: 'customer' | 'admin';
   }) {
-    const [user] = await sql`
-      INSERT INTO users(firebase_uid, email, phone, full_name, role)
-    VALUES(
-      ${userData.firebaseUid},
-      ${userData.email || null},
-      ${userData.phone || null},
-      ${userData.fullName || 'New User'},
-      ${userData.role}
-    )
-    RETURNING *
-      `;
-    return user;
+    const { data } = await api.post('/users', userData);
+    return data;
   },
 
   async updateUser(id: string, updates: Partial<{ full_name: string; phone: string; email: string }>) {
-    // Dynamic query construction would be better, but simple static checks for now
-    if (updates.full_name) await sql`UPDATE users SET full_name = ${updates.full_name} WHERE id = ${id} `;
-    if (updates.phone) await sql`UPDATE users SET phone = ${updates.phone} WHERE id = ${id} `;
-    if (updates.email) await sql`UPDATE users SET email = ${updates.email} WHERE id = ${id} `;
+    await api.patch('/users', { id, ...updates });
   },
 
   async getAllUsers() {
-    return await sql`SELECT * FROM users ORDER BY created_at DESC`;
+    const { data } = await api.get('/users');
+    return data;
   }
 };
 
@@ -303,49 +139,32 @@ export const MenuService = {
     image: string;
     available?: boolean;
   }>> {
-    // Auto-create table on first fetch if missing (simple migration strat)
     try {
-      const results = await sql`SELECT * FROM menu_items ORDER BY category, name`;
-      // Transform database results to match MenuItem interface
-      return results.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: Number(item.price),
-        category: item.category,
-        image: item.image,
-        available: item.is_available
-      }));
-    } catch (e: any) {
-      if (e.message.includes('relation "menu_items" does not exist')) {
-        await this.ensureTableExists();
+      const { data } = await api.get('/menu');
+      if (!Array.isArray(data)) {
+        console.error('API Error: Expected array for /menu but got:', typeof data);
         return [];
       }
-      throw e;
+      return data;
+    } catch (e) {
+      console.error('Failed to fetch menu items:', e);
+      return [];
     }
   },
 
   async createItem(item: any) {
-    await this.ensureTableExists(); // Ensure table exists before write
-    return await sql`
-      INSERT INTO menu_items(name, description, price, category, image, is_available)
-    VALUES(${item.name}, ${item.description}, ${item.price}, ${item.category}, ${item.image}, ${item.isAvailable ?? true})
-    RETURNING *
-      `;
+    const { data } = await api.post('/menu', item);
+    return data;
   },
 
   async updateItem(id: string, updates: any) {
-    // Simplified update logic to avoid complex dynamic query construction issues
-    if (updates.name !== undefined) await sql`UPDATE menu_items SET name = ${updates.name} WHERE id = ${id} `;
-    if (updates.description !== undefined) await sql`UPDATE menu_items SET description = ${updates.description} WHERE id = ${id} `;
-    if (updates.price !== undefined) await sql`UPDATE menu_items SET price = ${updates.price} WHERE id = ${id} `;
-    if (updates.category !== undefined) await sql`UPDATE menu_items SET category = ${updates.category} WHERE id = ${id} `;
-    if (updates.image !== undefined) await sql`UPDATE menu_items SET image = ${updates.image} WHERE id = ${id} `;
-    if (updates.isAvailable !== undefined) await sql`UPDATE menu_items SET is_available = ${updates.isAvailable} WHERE id = ${id} `;
+    const { data } = await api.put('/menu', { id, ...updates });
+    return data;
   },
 
   async deleteItem(id: string) {
-    await sql`DELETE FROM menu_items WHERE id = ${id} `;
+    const { data } = await api.delete(`/menu?id=${id}`);
+    return data;
   }
 };
 
@@ -368,67 +187,31 @@ export const OrderService = {
   },
 
   async createOrder(order: any) {
-    await this.ensureTableExists();
-    // Verify user exists first? Assuming auth context handles this.
-    const [newOrder] = await sql`
-      INSERT INTO orders(user_id, items, total_amount, status, delivery_type, delivery_address, payment_method)
-    VALUES(
-      ${order.userId},
-      ${JSON.stringify(order.items)},
-      ${order.totalAmount},
-      ${order.status || 'pending'},
-      ${order.deliveryType},
-      ${order.deliveryAddress},
-      ${order.paymentMethod}
-    )
-    RETURNING *
-      `;
-    return newOrder;
+    const { data } = await api.post('/orders', order);
+    return data;
   },
 
   async getUserOrders(userId: string) {
-    try {
-      return await sql`SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC`;
-    } catch (e: any) {
-      if (e.message.includes('relation "orders" does not exist')) {
-        await this.ensureTableExists();
-        return [];
-      }
-      throw e;
-    }
+    const { data } = await api.get(`/orders?userId=${userId}`);
+    return data;
   },
 
   async getOrderById(orderId: string) {
-    const orders = await sql`SELECT * FROM orders WHERE id = ${orderId} `;
-    return orders[0];
+    // Note: We don't have a specific getOne order endpoint yet, 
+    // but we can reuse the user filter or fetch all and filter client side for now.
+    // For production, we would add GET /api/orders/[id]
+    const orders = await this.getUserOrders(''); // Placeholder or fetch all
+    return orders.find((o: any) => o.id === orderId);
   },
 
   async getAllOrders() {
-    try {
-      // Join with users to get customer name
-      return await sql`
-        SELECT 
-          o.*, 
-          u.full_name as customer_name, 
-          u.phone as customer_phone,
-          d.verification_code,
-          d.confirmation_code
-        FROM orders o
-        LEFT JOIN users u ON o.user_id::text = u.id::text
-        LEFT JOIN deliveries d ON o.id::text = d.order_id::text
-        ORDER BY o.created_at DESC
-      `;
-    } catch (e: any) {
-      if (e.message.includes('relation "orders" does not exist')) {
-        await this.ensureTableExists();
-        return [];
-      }
-      throw e;
-    }
+    const { data } = await api.get('/orders');
+    return data;
   },
 
   async updateOrderStatus(orderId: string, status: string) {
-    await sql`UPDATE orders SET status = ${status} WHERE id = ${orderId} `;
+    const { data } = await api.patch('/orders', { orderId, status });
+    return data;
   }
 };
 
@@ -527,80 +310,34 @@ export const ReservationService = {
   },
 
   async createReservation(data: any) {
-    await this.ensureTableExists();
-    await sql`
-            INSERT INTO reservations (name, email, phone, date, time, guests, table_id, table_name, notes, status)
-            VALUES (${data.name}, ${data.email}, ${data.phone}, ${data.date}, ${data.time}, ${data.guests}, ${data.tableId || null}, ${data.tableName || null}, ${data.notes || ''}, 'pending')
-        `;
+    const { data: result } = await api.post('/reservations', data);
+    return result;
   },
 
   async getAllReservations() {
-    try {
-      return await sql`SELECT * FROM reservations ORDER BY created_at DESC`;
-    } catch (e: any) {
-      if (e.message.includes('relation "reservations" does not exist')) {
-        await this.ensureTableExists();
-        return [];
-      }
-      throw e;
-    }
-  },
-
-  async getReservationsByEmail(email: string) {
-    await this.ensureTableExists();
-    return await sql`
-      SELECT * FROM reservations 
-      WHERE email = ${email} 
-      ORDER BY date DESC, time DESC
-    `;
+    const { data } = await api.get('/reservations');
+    return data;
   },
 
   async getReservationsByUser(email?: string, phone?: string) {
-    await this.ensureTableExists();
-    if (!email && !phone) return [];
-
-    return await sql`
-      SELECT * FROM reservations 
-      WHERE (length(${email || ''}) > 0 AND email = ${email || ''}) 
-         OR (length(${phone || ''}) > 0 AND phone = ${phone || ''})
-      ORDER BY date DESC, time DESC
-    `;
+    const { data } = await api.get(`/reservations?email=${email || ''}&phone=${phone || ''}`);
+    return data;
   },
 
   async acceptReservation(id: string) {
-    await this.ensureTableExists();
-    await sql`
-      UPDATE reservations 
-      SET status = 'accepted' 
-      WHERE id = ${id}
-    `;
+    await api.patch('/reservations', { id, status: 'accepted' });
   },
 
   async cancelReservation(id: string) {
-    await this.ensureTableExists();
-    await sql`
-      UPDATE reservations 
-      SET status = 'cancelled' 
-      WHERE id = ${id}
-    `;
+    await api.patch('/reservations', { id, status: 'cancelled' });
   },
 
   async confirmReservation(id: string) {
-    await this.ensureTableExists();
-    await sql`
-      UPDATE reservations 
-      SET status = 'completed' 
-      WHERE id = ${id}
-    `;
+    await api.patch('/reservations', { id, status: 'completed' });
   },
 
   async markNoShow(id: string) {
-    await this.ensureTableExists();
-    await sql`
-      UPDATE reservations 
-      SET status = 'no-show' 
-      WHERE id = ${id}
-    `;
+    await api.patch('/reservations', { id, status: 'no-show' });
   }
 };
 
@@ -618,40 +355,22 @@ export const LocationService = {
   },
 
   async getAllLocations() {
-    await this.ensureTableExists();
-    return await sql`
-      SELECT * FROM locations 
-      WHERE active = TRUE 
-      ORDER BY name ASC
-    `;
+    const { data } = await api.get('/locations');
+    return data;
   },
 
   async addLocation(name: string, price: number) {
-    await this.ensureTableExists();
-    return await sql`
-      INSERT INTO locations (name, price)
-      VALUES (${name}, ${price})
-      RETURNING *
-    `;
+    const { data } = await api.post('/locations', { name, price });
+    return data;
   },
 
   async updateLocation(id: string, name: string, price: number) {
-    await this.ensureTableExists();
-    return await sql`
-      UPDATE locations 
-      SET name = ${name}, price = ${price}
-      WHERE id = ${id}
-      RETURNING *
-    `;
+    const { data } = await api.put('/locations', { id, name, price });
+    return data;
   },
 
   async deleteLocation(id: string) {
-    await this.ensureTableExists();
-    return await sql`
-      UPDATE locations 
-      SET active = FALSE 
-      WHERE id = ${id}
-    `;
+    await api.patch('/locations', { id, active: false });
   },
 
   async seedLocations() {

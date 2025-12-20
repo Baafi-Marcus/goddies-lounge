@@ -1,9 +1,15 @@
 import React from 'react';
 import { FaPhoneAlt, FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
+import SEO from '../components/SEO';
 
 const Contact: React.FC = () => {
     return (
         <div className="bg-gray-50 min-h-screen py-12 animate-fade-in">
+            <SEO
+                title="Contact Us"
+                description="Get in touch with Goodies Lounge & Wine Bar. Call us at 0303980021 or 0545022181, or visit us at Akyem Asafo."
+                keywords="contact restaurant, phone number, address, location, Akyem Asafo, customer support"
+            />
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">Contact <span className="text-brand-red">Us</span></h1>
