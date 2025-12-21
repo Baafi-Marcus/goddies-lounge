@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync, FaTimesCircle, FaMapMarkerAlt, FaPhoneAlt } from 'react-icons/fa';
+import { FaMotorcycle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync, FaTimesCircle, FaMapMarkerAlt } from 'react-icons/fa';
 import { generateVerificationCode, generateCustomerConfirmationCode } from '../../utils/qrCodeGenerator';
 import { OrderService, RiderService, DeliveryService, LocationService } from '../../services/neon';
 import { calculateCommission, calculateRiderEarning } from '../../utils/commissionCalculator';
@@ -192,33 +192,6 @@ const ManageOrders: React.FC = () => {
                 </button>
             </div>
 
-            {/* Stats Header */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                    <p className="text-yellow-600 text-sm font-medium">Pending</p>
-                    <p className="text-2xl font-bold text-yellow-700">
-                        {orders.filter(o => o.status === 'pending').length}
-                    </p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <p className="text-blue-600 text-sm font-medium">Preparing</p>
-                    <p className="text-2xl font-bold text-blue-700">
-                        {orders.filter(o => o.status === 'preparing').length}
-                    </p>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <p className="text-green-600 text-sm font-medium">Ready/Offered</p>
-                    <p className="text-2xl font-bold text-green-700">
-                        {orders.filter(o => ['ready', 'offered'].includes(o.status)).length}
-                    </p>
-                </div>
-                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                    <p className="text-purple-600 text-sm font-medium">Active (Assigned)</p>
-                    <p className="text-2xl font-bold text-purple-700">
-                        {orders.filter(o => ['assigned', 'in_transit'].includes(o.status)).length}
-                    </p>
-                </div>
-            </div>
 
             {/* Filters */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
