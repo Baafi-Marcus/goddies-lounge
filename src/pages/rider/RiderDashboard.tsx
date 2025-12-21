@@ -13,7 +13,9 @@ const RiderDashboard: React.FC = () => {
 
     if (!currentRider) return null;
 
-    const myDeliveries = deliveries.filter(d => d.riderId === currentRider.id);
+    const myDeliveries = deliveries
+        .filter(d => d.riderId === currentRider.id)
+        .sort((a, b) => new Date(b.created_at || b.assignedAt || 0).getTime() - new Date(a.created_at || a.assignedAt || 0).getTime());
     const availableDeliveries = deliveries.filter(d => d.status === 'pending' && !d.riderId);
     const completedToday = myDeliveries.filter(d =>
         d.status === 'delivered' &&

@@ -37,10 +37,10 @@ const RiderDeliveries: React.FC = () => {
             // Recent: Get rider's delivery history
             const riderDeliveries = await DeliveryService.getDeliveriesByRiderId(currentRider.id);
 
-            // Filter for completed/cancelled only
-            const recent = riderDeliveries.filter((d: any) =>
-                ['delivered', 'cancelled'].includes(d.status)
-            );
+            // Filter for completed/cancelled only and SORT by created_at DESC
+            const recent = riderDeliveries
+                .filter((d: any) => ['delivered', 'cancelled'].includes(d.status))
+                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             setAvailableDeliveries(available);
             setRecentDeliveries(recent);
