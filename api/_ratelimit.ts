@@ -22,6 +22,10 @@ if (redisUrl && redisToken) {
 }
 
 export async function checkRateLimit(identifier: string) {
+    if (process.env.NODE_ENV === 'development') {
+        return { success: true };
+    }
+
     if (!ratelimit) {
         // If not configured, allow all (or you could reject for security)
         console.warn("Ratelimit not configured. Allowing request for:", identifier);

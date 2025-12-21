@@ -1,14 +1,8 @@
-import { neon } from '@neondatabase/serverless';
 import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api'
 });
-
-// TODO: Replace with your Neon connection string
-const DATABASE_URL = import.meta.env.VITE_DATABASE_URL;
-
-const sql = neon(DATABASE_URL);
 
 // Rider Service
 export const RiderService = {
@@ -112,22 +106,11 @@ export const UserService = {
     return data;
   }
 };
-
 // Menu Service
 export const MenuService = {
   async ensureTableExists() {
-    await sql`
-      CREATE TABLE IF NOT EXISTS menu_items(
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price DECIMAL(10, 2) NOT NULL,
-        category VARCHAR(100) NOT NULL,
-        image TEXT,
-        is_available BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `;
+    // Schema is handled by server-side setup
+    return;
   },
 
   async getAllItems(): Promise<Array<{
@@ -174,19 +157,7 @@ export const MenuService = {
 // Order Service
 export const OrderService = {
   async ensureTableExists() {
-    await sql`
-      CREATE TABLE IF NOT EXISTS orders(
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id),
-        items JSONB NOT NULL,
-        total_amount DECIMAL(10, 2) NOT NULL,
-        status VARCHAR(50) DEFAULT 'pending',
-        delivery_type VARCHAR(20) NOT NULL, -- 'pickup' or 'delivery'
-        delivery_address TEXT,
-        payment_method VARCHAR(50) DEFAULT 'cod',
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-      `;
+    return;
   },
 
   async createOrder(order: any) {
@@ -220,96 +191,33 @@ export const OrderService = {
 
 export const TableService = {
   async ensureTableExists() {
-    try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS restaurant_tables (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          label VARCHAR(50) NOT NULL,
-          x INTEGER NOT NULL,
-          y INTEGER NOT NULL,
-          width INTEGER NOT NULL,
-          height INTEGER NOT NULL,
-          seats INTEGER NOT NULL,
-          shape VARCHAR(20) NOT NULL,
-          type VARCHAR(50) NOT NULL,
-          created_at TIMESTAMP DEFAULT NOW()
-        )
-      `;
-    } catch (e: any) {
-      // Ignore unique constraint violation on type/index creation race conditions
-      if (!e.message.includes('pg_type_typname_nsp_index')) {
-        throw e;
-      }
-    }
+    return;
   },
 
   async getLayout() {
-    try {
-      const results = await sql`SELECT * FROM restaurant_tables`;
-      return results.map(row => ({
-        id: row.id,
-        label: row.label,
-        x: row.x,
-        y: row.y,
-        width: row.width,
-        height: row.height,
-        seats: row.seats,
-        shape: row.shape,
-        type: row.type
-      }));
-    } catch (e: any) {
-      if (e.message.includes('relation "restaurant_tables" does not exist')) {
-        await this.ensureTableExists();
-        return [];
-      }
-      throw e;
-    }
+    const { data } = await api.get('/tables');
+    return data.map((row: any) => ({
+      id: row.id,
+      label: row.label,
+      x: row.x,
+      y: row.y,
+      width: row.width,
+      height: row.height,
+      seats: row.seats,
+      shape: row.shape,
+      type: row.type
+    }));
   },
 
   async saveLayout(tables: any[]) {
-    await this.ensureTableExists();
-    await sql`BEGIN`;
-    try {
-      await sql`DELETE FROM restaurant_tables`;
-      for (const t of tables) {
-        await sql`
-                  INSERT INTO restaurant_tables (id, label, x, y, width, height, seats, shape, type)
-                  VALUES (${t.id}, ${t.label}, ${t.x}, ${t.y}, ${t.width}, ${t.height}, ${t.seats}, ${t.shape}, ${t.type})
-              `;
-      }
-      await sql`COMMIT`;
-    } catch (e) {
-      await sql`ROLLBACK`;
-      throw e;
-    }
+    await api.post('/tables', { tables });
+    return true;
   }
 };
 
 export const ReservationService = {
   async ensureTableExists() {
-    try {
-      await sql`
-              CREATE TABLE IF NOT EXISTS reservations (
-                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                  name VARCHAR(255) NOT NULL,
-                  email VARCHAR(255) NOT NULL,
-                  phone VARCHAR(50) NOT NULL,
-                  date VARCHAR(50) NOT NULL,
-                  time VARCHAR(50) NOT NULL,
-                  guests INTEGER NOT NULL,
-                  table_id UUID,
-                  table_name VARCHAR(100),
-                  notes TEXT,
-                  status VARCHAR(50) DEFAULT 'pending',
-                  created_at TIMESTAMP DEFAULT NOW()
-              )
-          `;
-    } catch (e: any) {
-      // Ignore unique constraint violation on type/index creation race conditions
-      if (!e.message.includes('pg_type_typname_nsp_index')) {
-        throw e;
-      }
-    }
+    return;
   },
 
   async createReservation(data: any) {
@@ -346,15 +254,7 @@ export const ReservationService = {
 
 export const LocationService = {
   async ensureTableExists() {
-    await sql`
-      CREATE TABLE IF NOT EXISTS locations (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name TEXT NOT NULL,
-        price DECIMAL(10, 2) NOT NULL,
-        active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
+    return;
   },
 
   async getAllLocations() {
@@ -416,22 +316,9 @@ export const LocationService = {
   },
 
   async cleanupDuplicateLocations() {
-    await this.ensureTableExists();
-    // Keep the one with the LATEST created_at or ID (to keep recent edits if any). 
-    // Actually typically we keep the oldest, but here it doesn't matter much if they are identical.
-    // Let's keep the one with MIN id (oldest) to be stable.
-    await sql`
-      DELETE FROM locations
-      WHERE id IN (
-        SELECT id
-        FROM (
-          SELECT id,
-            ROW_NUMBER() OVER (PARTITION BY name ORDER BY id ASC) as row_num
-          FROM locations
-        ) t
-        WHERE t.row_num > 1
-      )
-    `;
+    // Cleanup logic moved to server-side if needed
+    // In production, we should avoid running this from frontend
+    return;
   }
 };
 
