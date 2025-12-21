@@ -34,7 +34,20 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [deliveries, setDeliveries] = useState<Delivery[]>([]);
     const [currentRider, setCurrentRider] = useState<Rider | null>(() => {
         const saved = localStorage.getItem('currentRider');
-        return saved ? JSON.parse(saved) : null;
+        const savedTime = localStorage.getItem('riderLoginTime');
+
+        if (saved && savedTime) {
+            const now = Date.now();
+            const loginTime = parseInt(savedTime, 10);
+            const twelveHours = 12 * 60 * 60 * 1000;
+
+            if (now - loginTime < twelveHours) {
+                return JSON.parse(saved);
+            }
+        }
+        localStorage.removeItem('currentRider');
+        localStorage.removeItem('riderLoginTime');
+        return null;
     });
 
     const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
@@ -111,8 +124,9 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                 // @ts-ignore
                 setCurrentRider(riderData);
-                // Also save to local storage for persistence
+                // Also save to local storage for persistence with timestamp
                 localStorage.setItem('currentRider', JSON.stringify(riderData));
+                localStorage.setItem('riderLoginTime', Date.now().toString());
                 return true;
             } else {
                 console.error("Rider not found with registration:", registrationNumber);

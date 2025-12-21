@@ -25,9 +25,9 @@ export default async function handler(
         SELECT
           r.id, r.registration_number as "registrationNumber", r.vehicle_type as "vehicleType",
           r.vehicle_number as "vehicleNumber", r.status,
-          r.total_deliveries as "totalDeliveries",
-          r.total_earnings as "totalEarnings",
-          r.current_balance as "currentBalance",
+          COALESCE(r.total_deliveries, 0) as "totalDeliveries",
+          COALESCE(r.total_earnings, 0) as "totalEarnings",
+          COALESCE(r.current_balance, 0) as "currentBalance",
           u.full_name as name, u.phone, u.email 
         FROM riders r 
         JOIN users u ON r.id = u.id

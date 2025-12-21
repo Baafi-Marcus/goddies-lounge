@@ -231,7 +231,12 @@ export const ReservationService = {
   },
 
   async getReservationsByUser(email?: string, phone?: string) {
-    const { data } = await api.get(`/reservations?email=${email || ''}&phone=${phone || ''}`);
+    const { data } = await api.get('/reservations', {
+      params: {
+        email: email || '',
+        phone: phone || ''
+      }
+    });
     return data;
   },
 

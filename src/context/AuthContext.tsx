@@ -24,6 +24,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setLoading(true);
 
             if (user) {
+                // Session Timeout Check (1 hour)
+                const savedTime = localStorage.getItem('userLoginTime');
+                const now = Date.now();
+                const oneHour = 1 * 60 * 60 * 1000;
+
+                if (savedTime && (now - parseInt(savedTime, 10) > oneHour)) {
+                    await signOut(auth);
+                    localStorage.removeItem('userLoginTime');
+                    setLoading(false);
+                    return;
+                }
+
+                if (!savedTime) {
+                    localStorage.setItem('userLoginTime', now.toString());
+                }
+
                 try {
                     // Check if user exists in Neon
                     let profile = await UserService.getUserByFirebaseUid(user.uid);
@@ -49,6 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     console.error("Error syncing user profile:", error);
                 }
             } else {
+                localStorage.removeItem('userLoginTime');
                 setUserProfile(null);
             }
             setLoading(false);
@@ -59,6 +76,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = async () => {
         await signOut(auth);
+        localStorage.removeItem('userLoginTime');
     };
 
     return (

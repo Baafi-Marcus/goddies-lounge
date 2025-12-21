@@ -130,11 +130,16 @@ const RiderDeliveries: React.FC = () => {
                                                 Delivery #{delivery.id.slice(0, 8)}
                                             </h3>
                                             <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                                <FaClock /> {new Date(delivery.created_at).toLocaleString()}
+                                                <FaClock /> {new Date(delivery.createdAt || delivery.created_at).toLocaleString()}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-2xl text-brand-red">₵{Number(delivery.delivery_fee).toFixed(2)}</p>
+                                            <p className="font-bold text-2xl text-brand-red">₵{Number(delivery.deliveryFee || delivery.delivery_fee).toFixed(2)}</p>
+                                            {activeTab === 'recent' && (
+                                                <p className="text-xs text-brand-primary font-medium mt-1">
+                                                    You Earned: ₵{Number(delivery.riderEarning || delivery.rider_earning || 0).toFixed(2)}
+                                                </p>
+                                            )}
                                             {activeTab === 'recent' && (
                                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 ${delivery.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                     }`}>
