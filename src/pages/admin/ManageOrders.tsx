@@ -164,14 +164,16 @@ const ManageOrders: React.FC = () => {
         : orders.filter(order => order.status.toLowerCase() === filterStatus.toLowerCase());
 
     const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Pending': return 'bg-yellow-100 text-yellow-700';
-            case 'Preparing': return 'bg-blue-100 text-blue-700';
-            case 'Ready': return 'bg-green-100 text-green-700';
-            case 'assigned': return 'bg-indigo-100 text-indigo-700';
-            case 'Delivered': return 'bg-gray-100 text-gray-700';
-            case 'Cancelled': return 'bg-red-100 text-red-700';
-            default: return 'bg-gray-100 text-gray-600';
+        const s = status.toLowerCase();
+        switch (s) {
+            case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'preparing': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'ready': return 'bg-green-100 text-green-800 border-green-200';
+            case 'assigned': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+            case 'in_transit': return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'delivered': return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+            default: return 'bg-gray-100 text-gray-600 border-gray-200';
         }
     };
 
@@ -189,19 +191,22 @@ const ManageOrders: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['All', 'Pending', 'Preparing', 'Ready', 'assigned', 'Delivered', 'Cancelled'].map((status) => (
-                    <button
-                        key={status}
-                        onClick={() => setFilterStatus(status)}
-                        className={`px - 4 py - 2 rounded - full font - medium whitespace - nowrap transition - colors ${filterStatus === status
-                            ? 'bg-brand-dark text-white'
-                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                            } `}
-                    >
-                        {status}
-                    </button>
-                ))}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                {['All', 'Pending', 'Preparing', 'Ready', 'Assigned', 'In Transit', 'Delivered', 'Cancelled'].map((status) => {
+                    const isActive = filterStatus.toLowerCase() === status.toLowerCase().replace(' ', '_');
+                    return (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status === 'All' ? 'All' : status.toLowerCase().replace(' ', '_'))}
+                            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all border ${isActive
+                                ? 'bg-brand-dark text-white border-brand-dark shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'
+                                }`}
+                        >
+                            {status}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Orders Table */}
@@ -257,7 +262,7 @@ const ManageOrders: React.FC = () => {
 
                                 return (
                                     <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-100">
                                             #{order.id.slice(0, 8)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -273,8 +278,8 @@ const ManageOrders: React.FC = () => {
                                                 {order.delivery_type}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900 max-w-xs truncate" title={itemsText}>
+                                        <td className="px-6 py-4 max-w-xs">
+                                            <div className="text-sm text-gray-700 truncate" title={itemsText}>
                                                 {itemsText}
                                             </div>
                                         </td>
@@ -282,69 +287,81 @@ const ManageOrders: React.FC = () => {
                                             ₵{Number(order.total_amount).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getStatusColor(order.status)}`}>
                                                 {order.status.replace('_', ' ')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex flex-col gap-2 items-end">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* Workflow Actions */}
+
+                                                {/* 1. Pending -> Accept (Simulate 'Preparing') */}
                                                 {['pending'].includes(order.status.toLowerCase()) && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'preparing')}
-                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
                                                     >
-                                                        <FaCheck className="mr-1" /> Accept
+                                                        <FaCheck className="mr-1" /> Accept & Prepare
                                                     </button>
                                                 )}
+
+                                                {/* 2. Preparing -> Ready */}
                                                 {['preparing'].includes(order.status.toLowerCase()) && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'ready')}
-                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors"
                                                     >
                                                         Mark Ready
                                                     </button>
                                                 )}
 
+                                                {/* 3. Ready -> Assign Rider (Delivery Only) */}
                                                 {order.status.toLowerCase() === 'ready' && order.delivery_type === 'delivery' && (
                                                     <button
                                                         onClick={() => setAssignModalOpen(order.id)}
-                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none"
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition-colors"
                                                     >
                                                         <FaUserPlus className="mr-1" /> Assign Rider
                                                     </button>
                                                 )}
 
+                                                {/* 4. Ready -> Complete Pickup (Pickup Only) */}
                                                 {['ready'].includes(order.status.toLowerCase()) && order.delivery_type === 'pickup' && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'delivered')}
-                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none transition-colors"
                                                     >
                                                         Complete Pickup
                                                     </button>
                                                 )}
 
+                                                {/* Cancel Option (Available until final stages) */}
                                                 {!['cancelled', 'delivered', 'assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'cancelled')}
-                                                        className="text-red-600 hover:text-red-900 text-xs underline"
+                                                        className="text-red-600 hover:text-red-900 text-xs underline px-2"
                                                     >
                                                         Cancel
                                                     </button>
                                                 )}
 
-                                                {/* Codes Display */}
-                                                {['assigned', 'in_transit', 'delivered'].includes(order.status.toLowerCase()) && (
-                                                    <div className="flex flex-col gap-1 text-[10px] text-right">
-                                                        {order.verification_code && !['delivered'].includes(order.status.toLowerCase()) && (
-                                                            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded border border-yellow-200">
-                                                                Rider Code: <b>{order.verification_code}</b>
+                                                {/* Status Badges for Active/Complete */}
+                                                {['assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-xs text-gray-500 italic">Rider Active</span>
+                                                        {order.verification_code && (
+                                                            <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200 mt-1">
+                                                                Code: {order.verification_code}
                                                             </span>
                                                         )}
-                                                        {order.status.toLowerCase() === 'delivered' && order.confirmation_code && (
-                                                            <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200">
-                                                                Conf: <b>{order.confirmation_code}</b>
-                                                            </span>
-                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {order.status.toLowerCase() === 'delivered' && (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-xs text-green-600 font-bold flex items-center">
+                                                            <FaCheckCircle className="mr-1" /> Done
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
