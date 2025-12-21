@@ -1,23 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaEye, FaMotorcycle, FaCheckCircle, FaClock, FaSpinner, FaCheck, FaUserPlus, FaSync, FaTimesCircle, FaMapMarkerAlt, FaPhoneAlt } from 'react-icons/fa';
 import { generateVerificationCode, generateCustomerConfirmationCode } from '../../utils/qrCodeGenerator';
 import { OrderService, RiderService, DeliveryService, LocationService } from '../../services/neon';
 import { calculateCommission, calculateRiderEarning } from '../../utils/commissionCalculator';
 
-interface OrderItem {
-    id?: string;
-    name: string;
-    quantity: number;
-}
-
 interface Order {
     id: string;
     customer_name?: string;
+    customer_phone?: string;
     total_amount: number;
     status: string;
     created_at: string;
-    items: OrderItem[];
+    items: any;
     delivery_type: 'delivery' | 'pickup';
     user_id?: string;
     delivery_address?: string;
@@ -32,6 +26,8 @@ interface Rider {
     status: string;
     registrationNumber: string;
     vehicleType: string;
+    totalDeliveries: number;
+    totalEarnings: number;
 }
 
 const ManageOrders: React.FC = () => {
@@ -98,7 +94,6 @@ const ManageOrders: React.FC = () => {
     };
 
     const handleAssignRider = async (orderId: string, riderId: string) => {
-        // Prevent Double Clicks
         if (isAssigning) return;
         setIsAssigning(true);
 
@@ -106,19 +101,18 @@ const ManageOrders: React.FC = () => {
             const order = orders.find(o => o.id === orderId);
             if (!order) return;
 
-            // Check if already assigned or offered (Front-end check)
+            // STRICT Check if already processed
             if (['assigned', 'offered', 'in_transit', 'delivered'].includes(order.status.toLowerCase())) {
-                alert("This order is already being processed by a rider.");
+                alert("This order is already being processed.");
                 setAssignModalOpen(null);
+                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'offered' } : o)); // Force update local state if stale
                 return;
             }
 
-            // 1. Calculate Dynamic Delivery Fee
-            // Strategy: Check if address contains any known location name
-            let deliveryFee = 15.00; // Default fallback
+            // Calculate Fee
+            let deliveryFee = 15.00;
             let foundLocationId = '';
 
-            // Ensuring Address is properly captured
             if (order.delivery_address) {
                 const foundLocation = locations.find(loc =>
                     order.delivery_address!.toLowerCase().includes(loc.name.toLowerCase())
@@ -129,7 +123,6 @@ const ManageOrders: React.FC = () => {
                 }
             }
 
-            // 1. Create Delivery Record
             const commissionAmount = calculateCommission(foundLocationId, deliveryFee, locations);
             const riderEarning = calculateRiderEarning(deliveryFee, commissionAmount);
             const commissionRate = deliveryFee > 0 ? commissionAmount / deliveryFee : 0;
@@ -138,7 +131,7 @@ const ManageOrders: React.FC = () => {
                 orderId: order.id,
                 customerId: order.user_id,
                 pickupLocation: 'Goodies Lounge, Accra',
-                deliveryLocation: order.delivery_address || 'Unknown Address', // Fallback
+                deliveryLocation: order.delivery_address || 'Unknown Address',
                 deliveryFee: deliveryFee,
                 commissionRate: commissionRate,
                 commissionAmount: commissionAmount,
@@ -147,29 +140,21 @@ const ManageOrders: React.FC = () => {
                 confirmationCode: generateCustomerConfirmationCode()
             };
 
-            // Create delivery (returns array)
-            // Note: Our API now has a cleaner to remove duplicates, but let's try to not create if exists.
-            // Ideally we'd check API, but 'createDelivery' is what we have.
-            // We rely on the frontend status check above primarily.
-
             const createdDeliveries = await DeliveryService.createDelivery(deliveryData);
             const newDelivery = createdDeliveries[0];
 
             if (newDelivery && newDelivery.id) {
-                // 2. Assign the Rider (Triggers 'Offered' status)
                 await DeliveryService.assignRider(newDelivery.id, riderId);
 
-                // 3. Update Order Status locally to reflect immediate change
-                // (Backend also updates it to 'offered')
+                // Optimistic Update
                 setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'offered' } : o));
 
-                // Refresh
-                fetchOrders();
                 setAssignModalOpen(null);
+                fetchOrders();
             }
         } catch (error) {
             console.error("Assignment failed", error);
-            alert("Failed to assign rider. Please try again.");
+            alert("Failed to assign rider.");
         } finally {
             setIsAssigning(false);
         }
@@ -182,15 +167,15 @@ const ManageOrders: React.FC = () => {
     const getStatusColor = (status: string) => {
         const s = status ? status.toLowerCase() : '';
         switch (s) {
-            case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'preparing': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'ready': return 'bg-green-100 text-green-800 border-green-200';
-            case 'offered': return 'bg-orange-100 text-orange-800 border-orange-200'; // New
-            case 'assigned': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-            case 'in_transit': return 'bg-purple-100 text-purple-800 border-purple-200';
-            case 'delivered': return 'bg-gray-100 text-gray-800 border-gray-200';
-            case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-600 border-gray-200';
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'preparing': return 'bg-blue-100 text-blue-800';
+            case 'ready': return 'bg-green-100 text-green-800';
+            case 'offered': return 'bg-orange-100 text-orange-800';
+            case 'assigned': return 'bg-indigo-100 text-indigo-800';
+            case 'in_transit': return 'bg-purple-100 text-purple-800';
+            case 'delivered': return 'bg-gray-800 text-white';
+            case 'cancelled': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-600';
         }
     };
 
@@ -205,6 +190,34 @@ const ManageOrders: React.FC = () => {
                 >
                     <FaSync className={`${loading ? 'animate-spin' : ''} `} /> Refresh
                 </button>
+            </div>
+
+            {/* Stats Header */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                    <p className="text-yellow-600 text-sm font-medium">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-700">
+                        {orders.filter(o => o.status === 'pending').length}
+                    </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-blue-600 text-sm font-medium">Preparing</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                        {orders.filter(o => o.status === 'preparing').length}
+                    </p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-green-600 text-sm font-medium">Ready/Offered</p>
+                    <p className="text-2xl font-bold text-green-700">
+                        {orders.filter(o => ['ready', 'offered'].includes(o.status)).length}
+                    </p>
+                </div>
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                    <p className="text-purple-600 text-sm font-medium">Active (Assigned)</p>
+                    <p className="text-2xl font-bold text-purple-700">
+                        {orders.filter(o => ['assigned', 'in_transit'].includes(o.status)).length}
+                    </p>
+                </div>
             </div>
 
             {/* Filters */}
@@ -226,217 +239,204 @@ const ManageOrders: React.FC = () => {
                 })}
             </div>
 
-            {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Order ID
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Date & Customer
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Type
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Items
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Total
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <FaSpinner className="animate-spin text-2xl mb-2 text-brand-red" />
-                                            <span>Loading orders...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : filteredOrders.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                                        No orders found matching the selected filter.
-                                    </td>
-                                </tr>
-                            ) : filteredOrders.map((order) => {
-                                // Helper: Format Items from JSONB
-                                const itemsText = Array.isArray(order.items)
-                                    ? order.items.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ')
-                                    : 'Items data unavailable';
+            {/* Orders List (Card Style) */}
+            <div className="space-y-4">
+                {loading ? (
+                    <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
+                        <FaSpinner className="animate-spin text-2xl mb-2 text-brand-red mx-auto" />
+                        <p className="text-gray-500">Loading orders...</p>
+                    </div>
+                ) : filteredOrders.length === 0 ? (
+                    <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
+                        <p className="text-gray-500">No orders found</p>
+                    </div>
+                ) : (
+                    filteredOrders.map((order) => {
+                        // Format Items
+                        const itemsText = Array.isArray(order.items)
+                            ? order.items.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ')
+                            : 'Items data unavailable';
 
-                                return (
-                                    <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-100">
-                                            #{order.id.slice(0, 8)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-gray-900">{order.customer_name || 'Guest User'}</div>
-                                            <div className="text-xs text-brand-dark flex items-center gap-1 mt-0.5">
-                                                <FaClock className="text-gray-400" /> {new Date(order.created_at).toLocaleString()}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${order.delivery_type === 'delivery' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'
-                                                }`}>
-                                                {order.delivery_type === 'delivery' && <FaMotorcycle className="mr-1" />}
-                                                {order.delivery_type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 max-w-xs">
-                                            <div className="text-sm text-gray-700 truncate" title={itemsText}>
-                                                {itemsText}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-brand-red">
-                                            ₵{Number(order.total_amount).toFixed(2)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getStatusColor(order.status)}`}>
+                        return (
+                            <div key={order.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                                <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                                    <div className="flex-grow">
+
+                                        {/* Status & ID */}
+                                        <div className="flex items-center gap-4 mb-3">
+                                            <span className="font-bold text-lg">Order #{order.id.slice(0, 8)}</span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(order.status)}`}>
                                                 {order.status.replace('_', ' ')}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {/* Workflow Actions */}
+                                            {order.delivery_type === 'pickup' && (
+                                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">Pickup</span>
+                                            )}
+                                        </div>
 
-                                                {/* 1. Pending -> Accept (Simulate 'Preparing') */}
-                                                {['pending'].includes(order.status.toLowerCase()) && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(order.id, 'preparing')}
-                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
-                                                    >
-                                                        <FaCheck className="mr-1" /> Accept & Prepare
-                                                    </button>
-                                                )}
-
-                                                {/* 2. Preparing -> Ready */}
-                                                {['preparing'].includes(order.status.toLowerCase()) && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(order.id, 'ready')}
-                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors"
-                                                    >
-                                                        Mark Ready
-                                                    </button>
-                                                )}
-
-                                                {/* 3. Ready -> Assign Rider (Delivery Only) */}
-                                                {order.status.toLowerCase() === 'ready' && order.delivery_type === 'delivery' && (
-                                                    <button
-                                                        onClick={() => setAssignModalOpen(order.id)}
-                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition-colors"
-                                                    >
-                                                        <FaUserPlus className="mr-1" /> Assign Rider
-                                                    </button>
-                                                )}
-
-                                                {/* 4. Ready -> Complete Pickup (Pickup Only) */}
-                                                {['ready'].includes(order.status.toLowerCase()) && order.delivery_type === 'pickup' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(order.id, 'delivered')}
-                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none transition-colors"
-                                                    >
-                                                        Complete Pickup
-                                                    </button>
-                                                )}
-
-                                                {/* Cancel Option (Available until final stages) */}
-                                                {!['cancelled', 'delivered', 'assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(order.id, 'cancelled')}
-                                                        className="text-red-600 hover:text-red-900 text-xs underline px-2"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                )}
-
-                                                {/* Status Badges for Active/Complete */}
-                                                {['assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="text-xs text-gray-500 italic">Rider Active</span>
-                                                        {order.verification_code && (
-                                                            <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200 mt-1">
-                                                                Code: {order.verification_code}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {order.status.toLowerCase() === 'delivered' && (
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="text-xs text-green-600 font-bold flex items-center">
-                                                            <FaCheckCircle className="mr-1" /> Done
-                                                        </span>
-                                                    </div>
-                                                )}
+                                        {/* Details Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                            {/* Customer */}
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                    <FaUserPlus className="text-blue-500 text-xs" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-800">{order.customer_name || 'Guest'}</p>
+                                                    <p className="text-xs">{order.customer_phone || 'No phone'}</p>
+                                                </div>
                                             </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+
+                                            {/* Date */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+                                                    <FaClock className="text-gray-400 text-xs" />
+                                                </div>
+                                                <p>{new Date(order.created_at).toLocaleString()}</p>
+                                            </div>
+
+                                            {/* Location (If Delivery) */}
+                                            {order.delivery_type === 'delivery' && (
+                                                <div className="flex items-start gap-3 md:col-span-2">
+                                                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                                                        <FaMapMarkerAlt className="text-brand-red text-xs" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-800 font-medium">{order.delivery_address || 'No address provided'}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Items */}
+                                            <div className="md:col-span-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-gray-800 font-medium">{itemsText}</p>
+                                                <p className="text-brand-red font-bold mt-1 text-right">Total: ₵{Number(order.total_amount).toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ACTIONS COLUMN */}
+                                    <div className="flex flex-col gap-2 min-w-[160px] md:border-l md:pl-6 border-gray-100">
+
+                                        {/* 1. Accept */}
+                                        {order.status === 'pending' && (
+                                            <button
+                                                onClick={() => handleStatusChange(order.id, 'preparing')}
+                                                className="w-full py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <FaCheck /> Accept
+                                            </button>
+                                        )}
+
+                                        {/* 2. Mark Ready */}
+                                        {order.status === 'preparing' && (
+                                            <button
+                                                onClick={() => handleStatusChange(order.id, 'ready')}
+                                                className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors"
+                                            >
+                                                Mark Ready
+                                            </button>
+                                        )}
+
+                                        {/* 3. Assign Rider (Only if Ready & Delivery) */}
+                                        {order.status === 'ready' && order.delivery_type === 'delivery' && (
+                                            <button
+                                                onClick={() => setAssignModalOpen(order.id)}
+                                                className="w-full py-2 bg-brand-dark text-white rounded-lg font-bold text-sm hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-dark/20"
+                                            >
+                                                <FaMotorcycle /> Assign Rider
+                                            </button>
+                                        )}
+
+                                        {/* 4. Complete Pickup */}
+                                        {order.status === 'ready' && order.delivery_type === 'pickup' && (
+                                            <button
+                                                onClick={() => handleStatusChange(order.id, 'delivered')}
+                                                className="w-full py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-700 transition-colors"
+                                            >
+                                                Complete Pickup
+                                            </button>
+                                        )}
+
+                                        {/* Rider Assigned Indication */}
+                                        {['offered'].includes(order.status) && (
+                                            <div className="w-full py-2 bg-orange-100 text-orange-800 rounded-lg font-bold text-sm text-center border border-orange-200">
+                                                <FaClock className="inline mr-1" /> Offer Sent
+                                            </div>
+                                        )}
+
+                                        {/* Cancel */}
+                                        {!['cancelled', 'delivered', 'assigned', 'in_transit', 'offered'].includes(order.status) && (
+                                            <button
+                                                onClick={() => handleStatusChange(order.id, 'cancelled')}
+                                                className="w-full py-2 text-red-500 hover:text-red-700 text-xs font-medium underline"
+                                            >
+                                                Cancel Order
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
-            {/* Rider Assign Modal */}
-            {
-                assignModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setAssignModalOpen(null)}>
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-                            <h3 className="text-2xl font-bold mb-4 text-brand-dark">Select a Rider</h3>
-                            <p className="text-gray-500 text-sm mb-4">Assign a rider to this delivery.</p>
+            {/* Rider Modal */}
+            {assignModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setAssignModalOpen(null)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-brand-dark">Assign Rider</h3>
+                            <button onClick={() => setAssignModalOpen(null)} className="text-gray-400 hover:text-gray-600">
+                                <FaTimesCircle className="text-2xl" />
+                            </button>
+                        </div>
 
-                            {riders.length === 0 ? (
-                                <div className="text-center py-6">
-                                    <p className="text-red-500 font-medium">No active riders found</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3 max-h-80 overflow-y-auto">
-                                    {riders.map((rider) => (
-                                        <button
-                                            key={rider.id}
-                                            disabled={isAssigning}
-                                            onClick={() => handleAssignRider(assignModalOpen, rider.id)}
-                                            className="w-full text-left p-4 rounded-xl border hover:border-brand-yellow hover:bg-yellow-50 transition-all flex justify-between items-center group"
-                                        >
+                        {riders.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-gray-500">No active riders available.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 overflow-y-auto flex-1 p-1">
+                                {riders.map((rider) => (
+                                    <button
+                                        key={rider.id}
+                                        disabled={isAssigning}
+                                        onClick={() => handleAssignRider(assignModalOpen, rider.id)}
+                                        className="w-full p-4 border border-gray-200 rounded-xl hover:border-brand-yellow hover:bg-yellow-50 transition-all text-left flex justify-between items-center group relative overflow-hidden"
+                                    >
+                                        {isAssigning && (
+                                            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                                                <FaSpinner className="animate-spin text-brand-dark" />
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">
+                                                <FaMotorcycle className="text-gray-400 group-hover:text-brand-dark transition-colors" />
+                                            </div>
                                             <div>
-                                                <p className="font-bold text-gray-800 group-hover:text-brand-dark">{rider.name}</p>
+                                                <p className="font-bold text-gray-900 group-hover:text-brand-dark">{rider.name}</p>
                                                 <p className="text-xs text-gray-500">{rider.phone}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            <div className="mt-6">
-                                <button
-                                    onClick={() => setAssignModalOpen(null)}
-                                    className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
-                                >
-                                    Cancel
-                                </button>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+                                                Active
+                                            </span>
+                                            <p className="text-[10px] text-gray-400 mt-1">{rider.vehicleType}</p>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
+                        )}
+
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <p className="text-center text-xs text-gray-400">Selecting a rider will send them an offer.</p>
                         </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 };
 
