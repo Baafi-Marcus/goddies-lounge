@@ -4,6 +4,7 @@ import { OrderService, DeliveryService } from '../../services/neon';
 import { Link } from 'react-router-dom';
 import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools, FaHistory, FaShoppingBag } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface Order {
     id: string;
@@ -74,7 +75,11 @@ const OrderTracking: React.FC = () => {
     };
 
     // Scanner Logic
-    const { Html5QrcodeScanner } = require('html5-qrcode');
+    // Moved import to top, but since we need it in useEffect, we keep it here? 
+    // No, standard imports must be at top-level.
+    // However, if we want to avoid SSR issues or specific load, we can use dynamic import().
+    // usage: const { Html5QrcodeScanner } = await import('html5-qrcode');
+    // But better to just Import at top if possible. Check line 1.
 
     useEffect(() => {
         const activeDeliveryOrder = activeOrders.find(o =>
