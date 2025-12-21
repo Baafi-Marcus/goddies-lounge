@@ -55,6 +55,15 @@ export const DeliveryService = {
     return data;
   },
 
+  async acceptDeliveryOffer(deliveryId: string, riderId: string) {
+    const { data } = await api.patch('/deliveries', {
+      action: 'accept_offer',
+      deliveryId,
+      riderId
+    });
+    return data;
+  },
+
   async createDelivery(deliveryData: any) {
     const { data } = await api.post('/deliveries', deliveryData);
     return data;

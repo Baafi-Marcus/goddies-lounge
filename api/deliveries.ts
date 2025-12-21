@@ -80,7 +80,21 @@ export default async function handler(
             const { action, deliveryId, riderId, earning } = request.body;
 
             if (action === 'assign') {
-                await sql`UPDATE deliveries SET rider_id = ${riderId}, status = 'assigned', assigned_at = NOW() WHERE id = ${deliveryId} `;
+                await sql`UPDATE deliveries SET rider_id = ${riderId}, status = 'offered', assigned_at = NOW() WHERE id = ${deliveryId} `;
+                // Note: We don't update order status to 'assigned' yet, we wait for rider acceptance.
+                // But maybe we should show 'Finding Rider' or 'Rider Offered'? 
+                // Let's keep order status as 'ready' or maybe a new 'offered' status? 
+                // For simplicity, let's update order to 'assigned' so Admin sees "Assigned (Offered)" or similar.
+                // ACTUALLY: User said "Admin: When you assign a rider, the status will now change to 'Offered'".
+                const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
+                if (d?.order_id) await sql`UPDATE orders SET status = 'offered' WHERE id = ${d.order_id} `;
+
+            } else if (action === 'accept_offer') {
+                // Rider accepts the offer
+                await sql`UPDATE deliveries SET status = 'assigned' WHERE id = ${deliveryId} AND rider_id = ${riderId}`;
+                const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
+                if (d?.order_id) await sql`UPDATE orders SET status = 'assigned' WHERE id = ${d.order_id} `;
+
             } else if (action === 'pickup') {
                 const [d] = await sql`UPDATE deliveries SET status = 'in_transit', picked_up_at = NOW() WHERE id = ${deliveryId} RETURNING order_id`;
                 if (d?.order_id) await sql`UPDATE orders SET status = 'in_transit' WHERE id = ${d.order_id} `;

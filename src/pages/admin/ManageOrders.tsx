@@ -98,16 +98,27 @@ const ManageOrders: React.FC = () => {
     };
 
     const handleAssignRider = async (orderId: string, riderId: string) => {
+        // Prevent Double Clicks
+        if (isAssigning) return;
         setIsAssigning(true);
+
         try {
             const order = orders.find(o => o.id === orderId);
             if (!order) return;
+
+            // Check if already assigned or offered (Front-end check)
+            if (['assigned', 'offered', 'in_transit', 'delivered'].includes(order.status.toLowerCase())) {
+                alert("This order is already being processed by a rider.");
+                setAssignModalOpen(null);
+                return;
+            }
 
             // 1. Calculate Dynamic Delivery Fee
             // Strategy: Check if address contains any known location name
             let deliveryFee = 15.00; // Default fallback
             let foundLocationId = '';
 
+            // Ensuring Address is properly captured
             if (order.delivery_address) {
                 const foundLocation = locations.find(loc =>
                     order.delivery_address!.toLowerCase().includes(loc.name.toLowerCase())
@@ -127,7 +138,7 @@ const ManageOrders: React.FC = () => {
                 orderId: order.id,
                 customerId: order.user_id,
                 pickupLocation: 'Goodies Lounge, Accra',
-                deliveryLocation: order.delivery_address || 'Unknown Address',
+                deliveryLocation: order.delivery_address || 'Unknown Address', // Fallback
                 deliveryFee: deliveryFee,
                 commissionRate: commissionRate,
                 commissionAmount: commissionAmount,
@@ -137,15 +148,20 @@ const ManageOrders: React.FC = () => {
             };
 
             // Create delivery (returns array)
+            // Note: Our API now has a cleaner to remove duplicates, but let's try to not create if exists.
+            // Ideally we'd check API, but 'createDelivery' is what we have.
+            // We rely on the frontend status check above primarily.
+
             const createdDeliveries = await DeliveryService.createDelivery(deliveryData);
             const newDelivery = createdDeliveries[0];
 
             if (newDelivery && newDelivery.id) {
-                // 2. Assign the Rider
+                // 2. Assign the Rider (Triggers 'Offered' status)
                 await DeliveryService.assignRider(newDelivery.id, riderId);
 
-                // 3. Update Order Status
-                await OrderService.updateOrderStatus(orderId, 'assigned');
+                // 3. Update Order Status locally to reflect immediate change
+                // (Backend also updates it to 'offered')
+                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'offered' } : o));
 
                 // Refresh
                 fetchOrders();
@@ -164,11 +180,12 @@ const ManageOrders: React.FC = () => {
         : orders.filter(order => order.status.toLowerCase() === filterStatus.toLowerCase());
 
     const getStatusColor = (status: string) => {
-        const s = status.toLowerCase();
+        const s = status ? status.toLowerCase() : '';
         switch (s) {
             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
             case 'preparing': return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'ready': return 'bg-green-100 text-green-800 border-green-200';
+            case 'offered': return 'bg-orange-100 text-orange-800 border-orange-200'; // New
             case 'assigned': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
             case 'in_transit': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'delivered': return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -192,7 +209,7 @@ const ManageOrders: React.FC = () => {
 
             {/* Filters */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                {['All', 'Pending', 'Preparing', 'Ready', 'Assigned', 'In Transit', 'Delivered', 'Cancelled'].map((status) => {
+                {['All', 'Pending', 'Preparing', 'Ready', 'Offered', 'Assigned', 'In Transit', 'Delivered', 'Cancelled'].map((status) => {
                     const isActive = filterStatus.toLowerCase() === status.toLowerCase().replace(' ', '_');
                     return (
                         <button

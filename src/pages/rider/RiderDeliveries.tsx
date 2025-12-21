@@ -1,67 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { useRider } from '../../context/RiderContext';
 import { DeliveryService } from '../../services/neon';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhone, FaClock, FaCheckCircle, FaHistory } from 'react-icons/fa';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhone, FaClock, FaCheckCircle, FaHistory, FaBox } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const RiderDeliveries: React.FC = () => {
     const { currentRider } = useRider();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'available' | 'recent'>('available');
-    const [availableDeliveries, setAvailableDeliveries] = useState<any[]>([]);
-    const [recentDeliveries, setRecentDeliveries] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'requests' | 'active' | 'history'>('requests');
+    const [deliveries, setDeliveries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const loadData = async () => {
+        try {
+            if (!currentRider?.id) return;
+            const data = await DeliveryService.getDeliveriesByRiderId(currentRider.id);
+            setDeliveries(data);
+        } catch (error) {
+            console.error("Failed to load deliveries", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!currentRider) {
             navigate('/rider/login');
             return;
         }
-        fetchDeliveries();
-        const interval = setInterval(fetchDeliveries, 5000);
+        loadData();
+        const interval = setInterval(loadData, 10000); // Poll every 10s
         return () => clearInterval(interval);
-    }, [currentRider]);
+    }, [currentRider, navigate]);
 
-    const fetchDeliveries = async () => {
-        try {
-            if (!currentRider?.id) return;
-
-            // Get all deliveries for available tab
-            const allDeliveries = await DeliveryService.getAllDeliveries();
-
-            // Available: pending status and no rider assigned
-            const available = allDeliveries.filter((d: any) =>
-                d.status === 'pending' && !d.rider_id
-            );
-
-            // Recent: Get rider's delivery history
-            const riderDeliveries = await DeliveryService.getDeliveriesByRiderId(currentRider.id);
-
-            // Filter for completed/cancelled only and SORT by created_at DESC
-            const recent = riderDeliveries
-                .filter((d: any) => ['delivered', 'cancelled'].includes(d.status))
-                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-            setAvailableDeliveries(available);
-            setRecentDeliveries(recent);
-        } catch (error) {
-            console.error('Failed to fetch deliveries:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const activeDeliveries = deliveries.filter(d => ['assigned', 'in_transit'].includes(d.status));
+    // 'offered' is the specific status for new requests
+    const requestedDeliveries = deliveries.filter(d => ['offered'].includes(d.status));
+    const pastDeliveries = deliveries.filter(d => ['delivered', 'cancelled'].includes(d.status))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const handleAcceptDelivery = async (deliveryId: string) => {
         if (!currentRider) return;
-
         try {
-            await DeliveryService.assignRider(deliveryId, currentRider.id);
-            fetchDeliveries();
-            navigate(`/rider/active/${deliveryId}`);
+            await DeliveryService.acceptDeliveryOffer(deliveryId, currentRider.id);
+            await loadData(); // Refresh immediately
+            setActiveTab('active'); // Switch to active tab
         } catch (error) {
-            console.error('Failed to accept delivery:', error);
-            alert('Failed to accept delivery. Please try again.');
+            console.error("Failed to accept", error);
+            alert("Failed to accept delivery. It might have been taken or cancelled.");
         }
+    };
+
+    const handleContinueDelivery = (deliveryId: string) => {
+        navigate(`/rider/active/${deliveryId}`);
     };
 
     if (loading) {
@@ -72,132 +63,186 @@ const RiderDeliveries: React.FC = () => {
         );
     }
 
-    const deliveriesToShow = activeTab === 'available' ? availableDeliveries : recentDeliveries;
-
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 pt-10 px-4">
-            <div className="container mx-auto max-w-4xl">
-                <h1 className="text-3xl font-heading font-bold text-brand-dark mb-8">Deliveries</h1>
-
-                {/* Tab Navigation */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-white rounded-lg shadow-md p-1 inline-flex">
-                        <button
-                            onClick={() => setActiveTab('available')}
-                            className={`px-6 py-3 rounded-md font-medium transition-all ${activeTab === 'available'
-                                ? 'bg-brand-red text-white shadow-md'
-                                : 'text-gray-600 hover:text-brand-red'
-                                }`}
-                        >
-                            <FaMotorcycle className="inline mr-2" />
-                            Available ({availableDeliveries.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('recent')}
-                            className={`px-6 py-3 rounded-md font-medium transition-all ${activeTab === 'recent'
-                                ? 'bg-brand-red text-white shadow-md'
-                                : 'text-gray-600 hover:text-brand-red'
-                                }`}
-                        >
-                            <FaHistory className="inline mr-2" />
-                            Recent ({recentDeliveries.length})
-                        </button>
+        <div className="min-h-screen bg-gray-50 pb-24">
+            {/* Header */}
+            <div className="bg-brand-dark text-white p-6 rounded-b-[30px] shadow-lg mb-6">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <p className="text-gray-300 text-sm">Welcome back,</p>
+                        <h1 className="text-2xl font-bold">{currentRider?.name || 'Rider'}</h1>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded-full">
+                        <FaMotorcycle className="text-2xl" />
                     </div>
                 </div>
 
-                {/* Deliveries List */}
-                {deliveriesToShow.length === 0 ? (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-                        <FaMotorcycle className="text-6xl text-gray-300 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            {activeTab === 'available' ? 'No Available Deliveries' : 'No Recent Deliveries'}
-                        </h2>
-                        <p className="text-gray-500">
-                            {activeTab === 'available'
-                                ? 'Check back soon for new delivery requests'
-                                : "You haven't completed any deliveries yet"}
+                {/* Earnings Summary */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex justify-between items-center border border-white/10">
+                    <div>
+                        <p className="text-xs text-gray-300 uppercase tracking-widest">Today's Earnings</p>
+                        <p className="text-3xl font-bold mt-1">
+                            ₵{deliveries
+                                .filter(d => d.status === 'delivered' && new Date(d.created_at).toDateString() === new Date().toDateString())
+                                .reduce((acc, curr) => acc + (Number(curr.riderEarning || curr.rider_earning) || 0), 0)
+                                .toFixed(2)}
                         </p>
                     </div>
-                ) : (
+                    <div className="text-right">
+                        <p className="text-xs text-gray-300 mb-1">Deliveries</p>
+                        <span className="bg-brand-yellow text-brand-dark font-bold px-3 py-1 rounded-full text-sm">
+                            {deliveries.filter(d => d.status === 'delivered' && new Date(d.created_at).toDateString() === new Date().toDateString()).length}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="px-6 mb-6">
+                <div className="bg-white p-1 rounded-xl shadow-sm flex text-center">
+                    <button
+                        onClick={() => setActiveTab('requests')}
+                        className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${activeTab === 'requests' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        Requests
+                        {requestedDeliveries.length > 0 && <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{requestedDeliveries.length}</span>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${activeTab === 'active' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        Active
+                        {activeDeliveries.length > 0 && <span className="ml-1 bg-brand-yellow text-brand-dark text-[10px] px-1.5 py-0.5 rounded-full">{activeDeliveries.length}</span>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${activeTab === 'history' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        History
+                    </button>
+                </div>
+            </div>
+
+            <div className="px-6 space-y-4">
+
+                {/* REQUESTS TAB */}
+                {activeTab === 'requests' && (
                     <div className="space-y-4">
-                        {deliveriesToShow.map((delivery) => (
-                            <div key={delivery.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="p-6">
-                                    {/* Header */}
-                                    <div className="flex justify-between items-start mb-4">
+                        {requestedDeliveries.length === 0 ? (
+                            <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 flex flex-col items-center">
+                                <FaBox className="text-4xl mb-3 opacity-20" />
+                                <p>No new requests</p>
+                            </div>
+                        ) : (
+                            requestedDeliveries.map(delivery => (
+                                <div key={delivery.id} className="bg-white p-5 rounded-2xl shadow-sm border border-brand-yellow/50 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 bg-brand-yellow text-xs font-bold px-3 py-1 rounded-bl-xl text-brand-dark shadow-sm">
+                                        NEW REQUEST
+                                    </div>
+                                    <div className="flex justify-between items-start mb-4 mt-2">
                                         <div>
-                                            <h3 className="font-bold text-lg text-gray-900">
-                                                Delivery #{delivery.id.slice(0, 8)}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                                <FaClock /> {new Date(delivery.createdAt || delivery.created_at).toLocaleString()}
-                                            </p>
+                                            <p className="text-xs text-gray-400 font-bold uppercase">Pickup</p>
+                                            <p className="font-bold text-gray-800 text-sm">{delivery.pickupLocation || delivery.pickup_location}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-2xl text-brand-red">₵{Number(delivery.deliveryFee || delivery.delivery_fee).toFixed(2)}</p>
-                                            {activeTab === 'recent' && (
-                                                <p className="text-xs text-brand-primary font-medium mt-1">
-                                                    You Earned: ₵{Number(delivery.riderEarning || delivery.rider_earning || 0).toFixed(2)}
-                                                </p>
-                                            )}
-                                            {activeTab === 'recent' && (
-                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 ${delivery.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                    }`}>
-                                                    {delivery.status.toUpperCase()}
-                                                </span>
-                                            )}
+                                            <p className="text-xs text-gray-400 font-bold uppercase">You Earn</p>
+                                            <p className="font-bold text-green-600 text-lg">₵{Number(delivery.riderEarning || delivery.rider_earning).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="h-8 w-0.5 bg-gray-200 mx-1"></div>
+                                        <div>
+                                            <p className="text-xs text-gray-400 font-bold uppercase">Dropoff</p>
+                                            <p className="font-medium text-gray-700 text-sm line-clamp-2">{delivery.deliveryLocation || delivery.delivery_location}</p>
                                         </div>
                                     </div>
 
-                                    {/* Locations */}
-                                    <div className="space-y-3 mb-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                                <FaMapMarkerAlt className="text-blue-600 text-sm" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-bold uppercase">Pickup</p>
-                                                <p className="text-gray-900 font-medium">{delivery.pickup_location}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                                <FaMapMarkerAlt className="text-green-600 text-sm" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-bold uppercase">Delivery</p>
-                                                <p className="text-gray-900 font-medium">{delivery.delivery_location}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Customer Info */}
-                                    {delivery.customer_phone && (
-                                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                                            <p className="text-xs text-gray-500 font-bold uppercase mb-1">Customer</p>
-                                            <a
-                                                href={`tel:${delivery.customer_phone}`}
-                                                className="flex items-center gap-2 text-brand-red font-medium hover:underline"
-                                            >
-                                                <FaPhone /> {delivery.customer_phone}
-                                            </a>
-                                        </div>
-                                    )}
-
-                                    {/* Action Button */}
-                                    {activeTab === 'available' && (
-                                        <button
-                                            onClick={() => handleAcceptDelivery(delivery.id)}
-                                            className="w-full py-3 bg-brand-red text-white rounded-xl font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <FaCheckCircle /> Accept Delivery
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => handleAcceptDelivery(delivery.id)}
+                                        className="w-full bg-brand-dark text-white py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <FaCheckCircle /> ACCEPT DELIVERY
+                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 )}
+
+                {/* ACTIVE TAB */}
+                {activeTab === 'active' && (
+                    <div className="space-y-4">
+                        {activeDeliveries.length === 0 ? (
+                            <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 flex flex-col items-center">
+                                <FaMotorcycle className="text-4xl mb-3 opacity-20" />
+                                <p>No active deliveries</p>
+                            </div>
+                        ) : (
+                            activeDeliveries.map(delivery => (
+                                <div key={delivery.id} className="bg-white p-5 rounded-2xl shadow-md border border-brand-dark/10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase border border-green-200">
+                                                {delivery.status.replace('_', ' ')}
+                                            </span>
+                                            <span className="text-xs text-gray-400 font-mono">#{delivery.id.slice(0, 6)}</span>
+                                        </div>
+                                        <p className="font-bold text-brand-dark">₵{Number(delivery.riderEarning || delivery.rider_earning).toFixed(2)}</p>
+                                    </div>
+
+                                    <div className="space-y-3 mb-6">
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Pickup</p>
+                                            <p className="text-sm font-medium text-gray-800">{delivery.pickupLocation || delivery.pickup_location}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Dropoff</p>
+                                            <p className="text-sm font-medium text-gray-800">{delivery.deliveryLocation || delivery.delivery_location}</p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleContinueDelivery(delivery.id)}
+                                        className="w-full bg-brand-yellow text-brand-dark py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-yellow-400 transition-colors"
+                                    >
+                                        CONTINUE / VERIFY
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+
+                {/* HISTORY TAB */}
+                {activeTab === 'history' && (
+                    <div className="space-y-4">
+                        {pastDeliveries.length === 0 ? (
+                            <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100 flex flex-col items-center">
+                                <FaHistory className="text-4xl mb-3 opacity-20" />
+                                <p>No delivery history</p>
+                            </div>
+                        ) : (
+                            pastDeliveries.map(delivery => (
+                                <div key={delivery.id} className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${delivery.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                {delivery.status}
+                                            </span>
+                                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                <FaClock className="text-[10px]" /> {new Date(delivery.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 line-clamp-1 max-w-[200px]">{delivery.deliveryLocation || delivery.delivery_location}</p>
+                                    </div>
+                                    <p className="font-bold text-gray-800">₵{Number(delivery.riderEarning || delivery.rider_earning).toFixed(2)}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+
             </div>
         </div>
     );
