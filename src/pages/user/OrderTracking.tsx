@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { OrderService, DeliveryService } from '../../services/neon';
 import { Link } from 'react-router-dom';
-import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools, FaHistory, FaShoppingBag } from 'react-icons/fa';
-import { QRCodeSVG } from 'qrcode.react';
+import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools, FaHistory, FaShoppingBag, FaExclamationTriangle } from 'react-icons/fa';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface Order {
@@ -45,7 +44,7 @@ const OrderTracking: React.FC = () => {
                 let enrichedOrder = order;
 
                 // Try to enrich with delivery details
-                if (order.delivery_type === 'delivery' && ['assigned', 'in_transit', 'delivered'].includes(order.status)) {
+                if (order.delivery_type === 'delivery' && ['ready', 'assigned', 'in_transit', 'delivered'].includes(order.status)) {
                     try {
                         const delivery = await DeliveryService.getDeliveryWithRider(order.id);
                         if (delivery) {
@@ -75,7 +74,6 @@ const OrderTracking: React.FC = () => {
     };
 
     // Scanner Logic - User scans Rider's QR when delivery is in_transit
-    const { Html5QrcodeScanner } = require('html5-qrcode');
 
     useEffect(() => {
         const activeDeliveryOrder = activeOrders.find(o =>
@@ -109,7 +107,7 @@ const OrderTracking: React.FC = () => {
                             fetchOrders();
                         }
 
-                    }, (error: any) => {
+                    }, () => {
                         // console.warn(error);
                     });
                 } catch (e) {
@@ -290,7 +288,36 @@ const OrderTracking: React.FC = () => {
 
                                                     <div id={`reader-${order.id}`} className="w-full mb-3 rounded-lg overflow-hidden border border-green-300"></div>
 
-                                                    <p className="text-[10px] text-green-600 text-center">The rider will show you a QR code when they arrive</p>
+                                                    <div className="mt-4 bg-white/50 rounded-lg p-3 text-center border border-green-200">
+                                                        <p className="text-[10px] text-green-700 uppercase font-bold mb-1">Backup Delivery Code</p>
+                                                        <p className="text-xl font-mono font-bold text-brand-dark tracking-widest">{order.delivery?.customerConfirmationCode}</p>
+                                                    </div>
+
+                                                    <p className="text-[10px] text-green-600 text-center mt-3">The rider will show you a QR code when they arrive</p>
+                                                </div>
+                                            )}
+
+                                            {/* Cancellation Reason Display for User */}
+                                            {order.delivery?.cancellation_reason && order.status === 'ready' && (
+                                                <div className="mt-4 bg-yellow-50 border border-yellow-300 rounded-xl p-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <FaExclamationTriangle className="text-yellow-600 text-xl mt-0.5 flex-shrink-0" />
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-yellow-900 mb-2">Delivery Reassignment in Progress</p>
+                                                            <p className="text-xs text-yellow-800 mb-2">
+                                                                The previous rider cancelled this delivery. We're assigning a new rider to complete your order.
+                                                            </p>
+                                                            <div className="bg-white/50 rounded-lg p-2 mt-2">
+                                                                <p className="text-xs font-semibold text-yellow-900 mb-1">Cancellation Reason:</p>
+                                                                <p className="text-xs text-yellow-800 italic">"{order.delivery.cancellation_reason}"</p>
+                                                            </div>
+                                                            {order.delivery.cancelled_at && (
+                                                                <p className="text-[10px] text-yellow-700 mt-2">
+                                                                    Cancelled: {new Date(order.delivery.cancelled_at).toLocaleString()}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -318,6 +345,14 @@ const OrderTracking: React.FC = () => {
                                                             <FaPhone className="text-sm" /> Call Rider
                                                         </a>
                                                     )}
+
+                                                    <div className="pt-4 border-t border-gray-200">
+                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1 text-center">Your Delivery Code</p>
+                                                        <p className="text-lg font-mono font-bold text-brand-dark text-center tracking-widest bg-white rounded-lg py-2 border border-gray-100 shadow-sm">
+                                                            {order.delivery.customerConfirmationCode}
+                                                        </p>
+                                                        <p className="text-[9px] text-gray-400 mt-2 text-center">Scan the rider's QR code when they arrive or share this code</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (!isHistory && isDelivery && currentStep >= 3) ? (

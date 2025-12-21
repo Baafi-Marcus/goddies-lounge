@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRider } from '../../context/RiderContext';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt } from 'react-icons/fa';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaTimesCircle } from 'react-icons/fa';
 
 const ManageDeliveries: React.FC = () => {
     const { deliveries, riders } = useRider();
@@ -103,6 +103,24 @@ const ManageDeliveries: React.FC = () => {
                                             <span className="font-mono font-bold text-brand-dark">{delivery.customerConfirmationCode}</span>
                                         </div>
                                     </div>
+
+                                    {/* Cancellation Reason Display */}
+                                    {delivery.status === 'cancelled' && (delivery as any).cancellationReason && (
+                                        <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                                            <div className="flex items-start gap-2">
+                                                <FaTimesCircle className="text-red-600 mt-0.5 flex-shrink-0" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-bold text-red-800 mb-1">Cancellation Reason</p>
+                                                    <p className="text-sm text-red-700">{(delivery as any).cancellationReason}</p>
+                                                    {(delivery as any).cancelledAt && (
+                                                        <p className="text-xs text-red-600 mt-1">
+                                                            Cancelled: {new Date((delivery as any).cancelledAt).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Status Info Only - No Actions */}

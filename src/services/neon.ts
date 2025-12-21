@@ -94,6 +94,11 @@ export const DeliveryService = {
   async getDeliveryWithRider(orderId: string) {
     const { data } = await api.get(`/deliveries?orderId=${orderId}`);
     return data;
+  },
+
+  async confirmDeliveryReceipt(orderId: string, code: string) {
+    const { data } = await api.patch('/deliveries', { action: 'user_confirm', orderId, code });
+    return data;
   }
 };
 

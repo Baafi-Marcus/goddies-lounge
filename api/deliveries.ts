@@ -14,7 +14,11 @@ export default async function handler(
             if (orderId) {
                 const results = await sql`
           SELECT 
-           d.*, r.vehicle_number, r.vehicle_type,
+           d.*, 
+           d.confirmation_code as "customerConfirmationCode",
+           d.cancellation_reason as "cancellationReason",
+           d.cancelled_at as "cancelledAt",
+           r.vehicle_number, r.vehicle_type,
            u.full_name as rider_name, u.phone as rider_phone
           FROM deliveries d
           LEFT JOIN riders r ON d.rider_id = r.id
@@ -32,7 +36,8 @@ export default async function handler(
             d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
             d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
             d.status, d.verification_code as "verificationCode", 
-            d.confirmation_code as "confirmationCode", d.created_at, d.rider_id as "riderId",
+            d.confirmation_code as "customerConfirmationCode", d.created_at, d.rider_id as "riderId",
+            d.cancellation_reason as "cancellationReason", d.cancelled_at as "cancelledAt",
             u.full_name as "customerName", u.phone as "customerPhone"
           FROM deliveries d
           LEFT JOIN users u ON d.customer_id::text = u.id::text
@@ -49,7 +54,8 @@ export default async function handler(
                     d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
                     d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
                     d.status, d.verification_code as "verificationCode",
-                    d.confirmation_code as "confirmationCode", d.created_at, d.rider_id as "riderId",
+                    d.confirmation_code as "customerConfirmationCode", d.created_at, d.rider_id as "riderId",
+                    d.cancellation_reason as "cancellationReason", d.cancelled_at as "cancelledAt",
                     u.full_name as "customerName", u.phone as "customerPhone", o.total_amount as "orderTotal"
                 FROM deliveries d 
                 LEFT JOIN users u ON d.customer_id::text = u.id::text
@@ -96,14 +102,26 @@ export default async function handler(
                 if (d?.order_id) await sql`UPDATE orders SET status = 'assigned' WHERE id = ${d.order_id} `;
 
             } else if (action === 'cancel') {
-                // Rider cancels delivery with reason
-                // Note: reason is logged but not stored in DB (would require schema update)
+                // Rider cancels delivery - order goes back to 'ready' for reassignment
                 const { reason } = request.body;
-                console.log(`Delivery ${deliveryId} cancelled. Reason: ${reason}`);
 
-                await sql`UPDATE deliveries SET status = 'cancelled' WHERE id = ${deliveryId}`;
-                const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
-                if (d?.order_id) await sql`UPDATE orders SET status = 'cancelled' WHERE id = ${d.order_id} `;
+                // Get the delivery and order info
+                const [delivery] = await sql`SELECT order_id, rider_id FROM deliveries WHERE id = ${deliveryId}`;
+
+                if (delivery) {
+                    // Update delivery with cancellation info
+                    await sql`
+                        UPDATE deliveries 
+                        SET status = 'cancelled',
+                            cancellation_reason = ${reason},
+                            cancelled_at = NOW(),
+                            cancelled_by_rider_id = ${delivery.rider_id}
+                        WHERE id = ${deliveryId}
+                    `;
+
+                    // Set order back to 'ready' so admin can reassign to another rider
+                    await sql`UPDATE orders SET status = 'ready' WHERE id = ${delivery.order_id}`;
+                }
 
             } else if (action === 'pickup') {
                 const [d] = await sql`UPDATE deliveries SET status = 'in_transit', picked_up_at = NOW() WHERE id = ${deliveryId} RETURNING order_id`;
