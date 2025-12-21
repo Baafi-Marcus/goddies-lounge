@@ -97,8 +97,11 @@ export default async function handler(
 
             } else if (action === 'cancel') {
                 // Rider cancels delivery with reason
+                // Note: reason is logged but not stored in DB (would require schema update)
                 const { reason } = request.body;
-                await sql`UPDATE deliveries SET status = 'cancelled', cancellation_reason = ${reason}, cancelled_at = NOW() WHERE id = ${deliveryId}`;
+                console.log(`Delivery ${deliveryId} cancelled. Reason: ${reason}`);
+
+                await sql`UPDATE deliveries SET status = 'cancelled' WHERE id = ${deliveryId}`;
                 const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
                 if (d?.order_id) await sql`UPDATE orders SET status = 'cancelled' WHERE id = ${d.order_id} `;
 
