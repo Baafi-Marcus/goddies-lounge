@@ -92,40 +92,8 @@ const RiderDeliveries: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24">
-            {/* Header */}
-            <div className="bg-brand-dark text-white p-6 rounded-b-[30px] shadow-lg mb-6">
-                <div className="flex justify-between items-center mb-4">
-                    <div>
-                        <p className="text-gray-300 text-sm">Welcome back,</p>
-                        <h1 className="text-2xl font-bold">{currentRider?.name || 'Rider'}</h1>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded-full">
-                        <FaMotorcycle className="text-2xl" />
-                    </div>
-                </div>
-
-                {/* Earnings Summary */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex justify-between items-center border border-white/10">
-                    <div>
-                        <p className="text-xs text-gray-300 uppercase tracking-widest">Today's Earnings</p>
-                        <p className="text-3xl font-bold mt-1">
-                            ₵{deliveries
-                                .filter(d => d.status === 'delivered' && new Date(d.created_at).toDateString() === new Date().toDateString())
-                                .reduce((acc, curr) => acc + (Number(curr.riderEarning || curr.rider_earning) || 0), 0)
-                                .toFixed(2)}
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs text-gray-300 mb-1">Deliveries</p>
-                        <span className="bg-brand-yellow text-brand-dark font-bold px-3 py-1 rounded-full text-sm">
-                            {deliveries.filter(d => d.status === 'delivered' && new Date(d.created_at).toDateString() === new Date().toDateString()).length}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             {/* Tabs */}
-            <div className="px-6 mb-6">
+            <div className="px-6 pt-6 mb-6">
                 <div className="bg-white p-1 rounded-xl shadow-sm flex text-center">
                     <button
                         onClick={() => setActiveTab('requests')}
