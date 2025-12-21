@@ -4,6 +4,7 @@ import {
     getAuth,
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithRedirect,
     signInWithPhoneNumber,
     RecaptchaVerifier,
     PhoneAuthProvider,
@@ -34,6 +35,7 @@ export const emailProvider = new EmailAuthProvider();
 
 export {
     signInWithPopup,
+    signInWithRedirect,
     signInWithPhoneNumber,
     RecaptchaVerifier,
     PhoneAuthProvider,

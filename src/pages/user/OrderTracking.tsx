@@ -74,17 +74,13 @@ const OrderTracking: React.FC = () => {
         }
     };
 
-    // Scanner Logic
-    // Moved import to top, but since we need it in useEffect, we keep it here? 
-    // No, standard imports must be at top-level.
-    // However, if we want to avoid SSR issues or specific load, we can use dynamic import().
-    // usage: const { Html5QrcodeScanner } = await import('html5-qrcode');
-    // But better to just Import at top if possible. Check line 1.
+    // Scanner Logic - User scans Rider's QR when delivery is in_transit
+    const { Html5QrcodeScanner } = require('html5-qrcode');
 
     useEffect(() => {
         const activeDeliveryOrder = activeOrders.find(o =>
             o.delivery_type === 'delivery' &&
-            ['in_transit', 'assigned'].includes(o.status)
+            o.status === 'in_transit' // Only for in_transit, not assigned
         );
 
         if (activeDeliveryOrder) {
@@ -104,14 +100,12 @@ const OrderTracking: React.FC = () => {
                         scanner.clear();
 
                         // Handle verification
-                        // For now we just alert, but we should call an API
                         try {
                             await DeliveryService.confirmDeliveryReceipt(activeDeliveryOrder.id, decodedText);
                             alert("Delivery Confirmed! Enjoy your meal.");
                             fetchOrders(); // Refresh
                         } catch (e) {
                             alert("Verification Failed. Please try again.");
-                            // Restart scanner if failed?
                             fetchOrders();
                         }
 
@@ -289,24 +283,14 @@ const OrderTracking: React.FC = () => {
                                                 ))}
                                             </ul>
 
-                                            {/* Confirmation Code & QR */}
-                                            {!isHistory && isDelivery && ['assigned', 'in_transit'].includes(order.status) && order.delivery?.customerConfirmationCode && (
-                                                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                                                    <p className="text-xs text-yellow-800 font-bold uppercase mb-3">Scan to Receive Delivery</p>
+                                            {/* QR Scanner for User to Scan Rider's Code */}
+                                            {!isHistory && isDelivery && ['in_transit'].includes(order.status) && (
+                                                <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
+                                                    <p className="text-xs text-green-800 font-bold uppercase mb-3 text-center">Scan Rider's QR Code to Confirm Delivery</p>
 
-                                                    <div className="bg-white p-2 rounded-lg shadow-sm border border-yellow-100 mb-3">
-                                                        <QRCodeSVG
-                                                            value={order.delivery.customerConfirmationCode}
-                                                            size={120}
-                                                            level="H"
-                                                        />
-                                                    </div>
+                                                    <div id={`reader-${order.id}`} className="w-full mb-3 rounded-lg overflow-hidden border border-green-300"></div>
 
-                                                    <p className="text-sm text-yellow-700 font-medium mb-1">Confirmation Code</p>
-                                                    <div className="text-xl font-mono font-bold text-brand-dark bg-white px-4 py-1 rounded border border-yellow-100 shadow-sm tracking-widest">
-                                                        {order.delivery.customerConfirmationCode}
-                                                    </div>
-                                                    <p className="text-[10px] text-yellow-600 mt-2">Show this to the rider upon arrival</p>
+                                                    <p className="text-[10px] text-green-600 text-center">The rider will show you a QR code when they arrive</p>
                                                 </div>
                                             )}
                                         </div>

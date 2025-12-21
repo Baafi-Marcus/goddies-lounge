@@ -238,10 +238,10 @@ const ActiveDelivery: React.FC = () => {
                     </div>
                 )}
 
-                {/* Complete Delivery (Status: In Transit) */}
+                {/* Complete Delivery (Status: In Transit) - Show QR Code */}
                 {delivery.status === 'in_transit' && (
                     <div className="bg-white rounded-xl shadow-sm p-6">
-                        <h2 className="text-xl font-bold mb-4 text-brand-dark">Complete Delivery</h2>
+                        <h2 className="text-xl font-bold mb-4 text-brand-dark">Show QR Code to Customer</h2>
 
                         {error && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-center gap-3">
@@ -250,34 +250,28 @@ const ActiveDelivery: React.FC = () => {
                             </div>
                         )}
 
+                        <div className="bg-gradient-to-br from-brand-yellow/20 to-yellow-100 border-2 border-brand-yellow rounded-2xl p-6 text-center">
+                            <p className="text-sm font-bold text-brand-dark mb-4">Customer will scan this QR code</p>
 
-                        <div id="reader" className="w-full mb-4 rounded-lg overflow-hidden border border-gray-300"></div>
-
-                        <form onSubmit={handleCompleteDelivery} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Scan Customer QR or Enter Code
-                                </label>
-                                <input
-                                    type="text"
-                                    value={inputCode}
-                                    onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-center text-2xl font-bold tracking-widest"
-                                    placeholder="000000"
-                                    maxLength={6}
-                                    required
-                                    disabled={loading}
+                            <div className="bg-white p-4 rounded-xl shadow-lg inline-block mb-4">
+                                <QRCodeSVG
+                                    value={delivery.customerConfirmationCode}
+                                    size={200}
+                                    level="H"
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:bg-green-400"
-                            >
-                                <FaCheckCircle /> Verify & Complete
-                            </button>
-                        </form>
+                            <div className="bg-white rounded-lg p-3 mb-2">
+                                <p className="text-xs text-gray-600 mb-1">Confirmation Code</p>
+                                <p className="text-2xl font-mono font-bold text-brand-dark tracking-widest">
+                                    {delivery.customerConfirmationCode}
+                                </p>
+                            </div>
+
+                            <p className="text-xs text-gray-600 mt-4">
+                                The customer will scan this code or enter it on their app to confirm delivery
+                            </p>
+                        </div>
                     </div>
                 )}
 

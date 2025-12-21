@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
 import { useRider } from '../../context/RiderContext';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaUserPlus } from 'react-icons/fa';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt } from 'react-icons/fa';
 
 const ManageDeliveries: React.FC = () => {
-    const { deliveries, riders, assignDelivery } = useRider();
+    const { deliveries, riders } = useRider();
     const [selectedDelivery, setSelectedDelivery] = useState<string | null>(null);
-    const [showQRModal, setShowQRModal] = useState(false);
-    const [assignModal, setAssignModal] = useState<string | null>(null);
-
-    const activeRiders = riders.filter(r => r.status === 'active');
-
-    const handleAssignRider = async (deliveryId: string, riderId: string) => {
-        await assignDelivery(deliveryId, riderId);
-        setAssignModal(null);
-    };
 
     const viewDelivery = deliveries.find(d => d.id === selectedDelivery);
 
@@ -114,14 +105,31 @@ const ManageDeliveries: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col gap-2 min-w-[150px]">
+                                {/* Status Info Only - No Actions */}
+                                <div className="flex flex-col gap-2 min-w-[150px] md:border-l md:pl-6 border-gray-100">
                                     {delivery.status === 'pending' && (
-                                        <button
-                                            onClick={() => setAssignModal(delivery.id)}
-                                            className="flex items-center justify-center gap-2 btn-primary py-2 text-sm"
-                                        >
-                                            <FaUserPlus /> Assign Rider
-                                        </button>
+                                        <div className="text-center py-3 px-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                            <p className="text-xs text-yellow-700 font-medium">Awaiting Assignment</p>
+                                            <p className="text-[10px] text-yellow-600 mt-1">Assign from Orders page</p>
+                                        </div>
+                                    )}
+                                    {delivery.status === 'assigned' && (
+                                        <div className="text-center py-3 px-4 bg-blue-50 rounded-lg border border-blue-200">
+                                            <p className="text-xs text-blue-700 font-medium">Rider Assigned</p>
+                                            <p className="text-[10px] text-blue-600 mt-1">Waiting for pickup</p>
+                                        </div>
+                                    )}
+                                    {delivery.status === 'in_transit' && (
+                                        <div className="text-center py-3 px-4 bg-purple-50 rounded-lg border border-purple-200">
+                                            <p className="text-xs text-purple-700 font-medium">In Transit</p>
+                                            <p className="text-[10px] text-purple-600 mt-1">On the way</p>
+                                        </div>
+                                    )}
+                                    {delivery.status === 'delivered' && (
+                                        <div className="text-center py-3 px-4 bg-green-50 rounded-lg border border-green-200">
+                                            <p className="text-xs text-green-700 font-medium">Completed</p>
+                                            <p className="text-[10px] text-green-600 mt-1">Successfully delivered</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -129,49 +137,6 @@ const ManageDeliveries: React.FC = () => {
                     ))
                 )}
             </div>
-
-            {/* Assign Rider Modal */}
-            {assignModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setAssignModal(null)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-2xl font-bold mb-4 text-brand-dark">Assign Rider</h3>
-
-                        {activeRiders.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-gray-500 mb-4">No active riders available</p>
-                                <button
-                                    onClick={() => setAssignModal(null)}
-                                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {activeRiders.map(rider => (
-                                    <button
-                                        key={rider.id}
-                                        onClick={() => handleAssignRider(assignModal, rider.id)}
-                                        className="w-full p-4 border-2 border-gray-200 hover:border-brand-yellow hover:bg-yellow-50 rounded-lg transition-colors text-left"
-                                    >
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="font-bold text-brand-dark">{rider.name}</p>
-                                                <p className="text-sm text-gray-600">{rider.registrationNumber}</p>
-                                                <p className="text-xs text-gray-500 capitalize">{rider.vehicleType} - {rider.vehicleNumber}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-600">{rider.totalDeliveries} deliveries</p>
-                                                <p className="text-xs text-green-600 font-medium">₵{rider.totalEarnings.toFixed(2)}</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

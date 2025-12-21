@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRider } from '../../context/RiderContext';
 import { DeliveryService } from '../../services/neon';
-import { FaMotorcycle, FaMapMarkerAlt, FaPhone, FaClock, FaCheckCircle, FaHistory, FaBox } from 'react-icons/fa';
+import { FaMotorcycle, FaMapMarkerAlt, FaPhone, FaClock, FaCheckCircle, FaHistory, FaBox, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const RiderDeliveries: React.FC = () => {
@@ -10,6 +10,11 @@ const RiderDeliveries: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'requests' | 'active' | 'history'>('requests');
     const [deliveries, setDeliveries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Cancel Modal State
+    const [cancelModalOpen, setCancelModalOpen] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState('');
+    const [isCancelling, setIsCancelling] = useState(false);
 
     const loadData = async () => {
         try {
@@ -44,10 +49,32 @@ const RiderDeliveries: React.FC = () => {
         try {
             await DeliveryService.acceptDeliveryOffer(deliveryId, currentRider.id);
             await loadData(); // Refresh immediately
-            setActiveTab('active'); // Switch to active tab
+            // Don't auto-switch to active tab - allow accepting multiple
         } catch (error) {
             console.error("Failed to accept", error);
             alert("Failed to accept delivery. It might have been taken or cancelled.");
+        }
+    };
+
+    const handleCancelDelivery = async () => {
+        if (!cancelModalOpen || !cancelReason.trim()) {
+            alert("Please provide a reason for cancellation");
+            return;
+        }
+
+        setIsCancelling(true);
+        try {
+            // Call API to cancel delivery with reason
+            await DeliveryService.cancelDelivery(cancelModalOpen, cancelReason);
+            await loadData();
+            setCancelModalOpen(null);
+            setCancelReason('');
+            alert("Delivery cancelled successfully");
+        } catch (error) {
+            console.error("Failed to cancel delivery", error);
+            alert("Failed to cancel delivery. Please try again.");
+        } finally {
+            setIsCancelling(false);
         }
     };
 
@@ -201,12 +228,20 @@ const RiderDeliveries: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <button
-                                        onClick={() => handleContinueDelivery(delivery.id)}
-                                        className="w-full bg-brand-yellow text-brand-dark py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-yellow-400 transition-colors"
-                                    >
-                                        CONTINUE / VERIFY
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleContinueDelivery(delivery.id)}
+                                            className="flex-1 bg-brand-yellow text-brand-dark py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-yellow-400 transition-colors"
+                                        >
+                                            CONTINUE / VERIFY
+                                        </button>
+                                        <button
+                                            onClick={() => setCancelModalOpen(delivery.id)}
+                                            className="px-4 bg-red-50 text-red-600 rounded-xl font-bold text-sm border border-red-200 hover:bg-red-100 transition-colors flex items-center gap-1"
+                                        >
+                                            <FaTimes /> Cancel
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         )}
@@ -244,6 +279,51 @@ const RiderDeliveries: React.FC = () => {
                 )}
 
             </div>
+
+            {/* Cancel Modal */}
+            {cancelModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setCancelModalOpen(null)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                <FaExclamationTriangle className="text-red-600 text-xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Cancel Delivery</h3>
+                                <p className="text-sm text-gray-500">Please provide a reason</p>
+                            </div>
+                        </div>
+
+                        <textarea
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            placeholder="Enter cancellation reason (e.g., vehicle breakdown, emergency, etc.)"
+                            className="w-full border border-gray-300 rounded-xl p-3 text-sm resize-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            rows={4}
+                        />
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    setCancelModalOpen(null);
+                                    setCancelReason('');
+                                }}
+                                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                                disabled={isCancelling}
+                            >
+                                Keep Delivery
+                            </button>
+                            <button
+                                onClick={handleCancelDelivery}
+                                disabled={isCancelling || !cancelReason.trim()}
+                                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

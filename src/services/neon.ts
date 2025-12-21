@@ -64,6 +64,15 @@ export const DeliveryService = {
     return data;
   },
 
+  async cancelDelivery(deliveryId: string, reason: string) {
+    const { data } = await api.patch('/deliveries', {
+      action: 'cancel',
+      deliveryId,
+      reason
+    });
+    return data;
+  },
+
   async createDelivery(deliveryData: any) {
     const { data } = await api.post('/deliveries', deliveryData);
     return data;

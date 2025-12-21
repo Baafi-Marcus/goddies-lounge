@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-    signInWithPopup,
+    signInWithRedirect,
     googleProvider,
     signInWithPhoneNumber,
     RecaptchaVerifier,
@@ -64,8 +64,10 @@ const Login: React.FC = () => {
         setLoading(true);
         setError('');
         try {
-            await signInWithPopup(auth, googleProvider);
-            navigate(from, { replace: true });
+            // Use redirect instead of popup to avoid browser blocking
+            await signInWithRedirect(auth, googleProvider);
+            // Note: After redirect, user will be redirected back to this page
+            // The redirect result will be handled by getRedirectResult in AuthContext
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Google Sign-In failed');

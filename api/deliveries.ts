@@ -95,6 +95,13 @@ export default async function handler(
                 const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
                 if (d?.order_id) await sql`UPDATE orders SET status = 'assigned' WHERE id = ${d.order_id} `;
 
+            } else if (action === 'cancel') {
+                // Rider cancels delivery with reason
+                const { reason } = request.body;
+                await sql`UPDATE deliveries SET status = 'cancelled', cancellation_reason = ${reason}, cancelled_at = NOW() WHERE id = ${deliveryId}`;
+                const [d] = await sql`SELECT order_id FROM deliveries WHERE id = ${deliveryId}`;
+                if (d?.order_id) await sql`UPDATE orders SET status = 'cancelled' WHERE id = ${d.order_id} `;
+
             } else if (action === 'pickup') {
                 const [d] = await sql`UPDATE deliveries SET status = 'in_transit', picked_up_at = NOW() WHERE id = ${deliveryId} RETURNING order_id`;
                 if (d?.order_id) await sql`UPDATE orders SET status = 'in_transit' WHERE id = ${d.order_id} `;
