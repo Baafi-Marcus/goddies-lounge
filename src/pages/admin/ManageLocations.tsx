@@ -102,7 +102,7 @@ const ManageLocations: React.FC = () => {
                     </button>
                     <button
                         onClick={() => openModal()}
-                        className="flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary/90 transition-colors"
+                        className="flex items-center gap-2 bg-brand-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                         <FaPlus /> Add Location
                     </button>
@@ -189,7 +189,7 @@ const ManageLocations: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-xl hover:bg-brand-primary/90 font-medium"
+                                    className="flex-1 px-4 py-2 bg-brand-red text-white rounded-xl hover:bg-red-700 font-medium"
                                 >
                                     Save Location
                                 </button>

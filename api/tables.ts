@@ -16,15 +16,18 @@ export default async function handler(
         if (method === 'POST') {
             const { tables } = request.body;
 
-            await sql.begin(async (sql) => {
-                await sql`DELETE FROM restaurant_tables`;
-                for (const t of tables) {
-                    await sql`
-            INSERT INTO restaurant_tables (id, label, x, y, width, height, seats, shape, type)
-            VALUES (${t.id}, ${t.label}, ${t.x}, ${t.y}, ${t.width}, ${t.height}, ${t.seats}, ${t.shape}, ${t.type})
-          `;
-                }
-            });
+            // Note: Neon serverless HTTP doesn't support interactive transactions (BEGIN/COMMIT) 
+            // the same way a stateful connection does. We will execute sequentially.
+            // For a small number of tables, this is acceptable.
+
+            await sql`DELETE FROM restaurant_tables`;
+
+            for (const t of tables) {
+                await sql`
+                    INSERT INTO restaurant_tables (id, label, x, y, width, height, seats, shape, type)
+                    VALUES (${t.id}, ${t.label}, ${t.x}, ${t.y}, ${t.width}, ${t.height}, ${t.seats}, ${t.shape}, ${t.type})
+                `;
+            }
 
             return response.status(200).json({ success: true });
         }

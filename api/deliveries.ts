@@ -25,13 +25,30 @@ export default async function handler(
             }
 
             if (riderId) {
-                const deliveries = await sql`SELECT * FROM deliveries WHERE rider_id = ${riderId as string} ORDER BY created_at DESC`;
+                const deliveries = await sql`
+          SELECT 
+            id, order_id as "orderId", customer_id as "customerId",
+            pickup_location as "pickupLocation", delivery_location as "deliveryLocation",
+            delivery_fee as "deliveryFee", commission_rate as "commissionRate",
+            commission_amount as "commissionAmount", rider_earning as "riderEarning",
+            status, verification_code as "verificationCode", 
+            confirmation_code as "confirmationCode", created_at, rider_id as "riderId"
+          FROM deliveries 
+          WHERE rider_id = ${riderId as string} 
+          ORDER BY created_at DESC
+        `;
                 return response.status(200).json(deliveries);
             }
 
             const allDeliveries = await sql`
         SELECT
-          d.*, u.full_name as "customerName", u.phone as "customerPhone", o.total_amount as "orderTotal"
+          d.id, d.order_id as "orderId", d.customer_id as "customerId",
+          d.pickup_location as "pickupLocation", d.delivery_location as "deliveryLocation",
+          d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
+          d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
+          d.status, d.verification_code as "verificationCode", 
+          d.confirmation_code as "confirmationCode", d.created_at, d.rider_id as "riderId",
+          u.full_name as "customerName", u.phone as "customerPhone", o.total_amount as "orderTotal"
         FROM deliveries d 
         LEFT JOIN users u ON d.customer_id::text = u.id::text
         LEFT JOIN orders o ON d.order_id::text = o.id::text
