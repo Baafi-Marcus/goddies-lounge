@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { OrderService, DeliveryService } from '../../services/neon';
 import { Link } from 'react-router-dom';
 import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools, FaHistory, FaShoppingBag } from 'react-icons/fa';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Order {
     id: string;
@@ -72,6 +73,59 @@ const OrderTracking: React.FC = () => {
         }
     };
 
+    // Scanner Logic
+    const { Html5QrcodeScanner } = require('html5-qrcode');
+
+    useEffect(() => {
+        const activeDeliveryOrder = activeOrders.find(o =>
+            o.delivery_type === 'delivery' &&
+            ['in_transit', 'assigned'].includes(o.status)
+        );
+
+        if (activeDeliveryOrder) {
+            let scanner: any;
+            const elementId = `reader-${activeDeliveryOrder.id}`;
+            const element = document.getElementById(elementId);
+
+            if (element) {
+                try {
+                    scanner = new Html5QrcodeScanner(
+                        elementId,
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        /* verbose= */ false
+                    );
+                    scanner.render(async (decodedText: string) => {
+                        console.log("Scanned Code:", decodedText);
+                        scanner.clear();
+
+                        // Handle verification
+                        // For now we just alert, but we should call an API
+                        try {
+                            await DeliveryService.confirmDeliveryReceipt(activeDeliveryOrder.id, decodedText);
+                            alert("Delivery Confirmed! Enjoy your meal.");
+                            fetchOrders(); // Refresh
+                        } catch (e) {
+                            alert("Verification Failed. Please try again.");
+                            // Restart scanner if failed?
+                            fetchOrders();
+                        }
+
+                    }, (error: any) => {
+                        // console.warn(error);
+                    });
+                } catch (e) {
+                    console.error("Scanner init error", e);
+                }
+            }
+
+            return () => {
+                if (scanner) {
+                    scanner.clear().catch((e: any) => console.error(e));
+                }
+            };
+        }
+    }, [activeOrders]);
+
     const getStatusStep = (status: string) => {
         switch (status.toLowerCase()) {
             case 'pending': return 1;
@@ -116,8 +170,8 @@ const OrderTracking: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('active')}
                             className={`px-6 py-3 rounded-md font-medium transition-all ${activeTab === 'active'
-                                    ? 'bg-brand-red text-white shadow-md'
-                                    : 'text-gray-600 hover:text-brand-red'
+                                ? 'bg-brand-red text-white shadow-md'
+                                : 'text-gray-600 hover:text-brand-red'
                                 }`}
                         >
                             <FaShoppingBag className="inline mr-2" />
@@ -126,8 +180,8 @@ const OrderTracking: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('history')}
                             className={`px-6 py-3 rounded-md font-medium transition-all ${activeTab === 'history'
-                                    ? 'bg-brand-red text-white shadow-md'
-                                    : 'text-gray-600 hover:text-brand-red'
+                                ? 'bg-brand-red text-white shadow-md'
+                                : 'text-gray-600 hover:text-brand-red'
                                 }`}
                         >
                             <FaHistory className="inline mr-2" />
@@ -230,16 +284,24 @@ const OrderTracking: React.FC = () => {
                                                 ))}
                                             </ul>
 
-                                            {/* Confirmation Code */}
+                                            {/* Confirmation Code & QR */}
                                             {!isHistory && isDelivery && ['assigned', 'in_transit'].includes(order.status) && order.delivery?.customerConfirmationCode && (
-                                                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-xs text-yellow-800 font-bold uppercase mb-1">Your Confirmation Code</p>
-                                                        <p className="text-sm text-yellow-700">Give this to the rider to confirm delivery</p>
+                                                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                                                    <p className="text-xs text-yellow-800 font-bold uppercase mb-3">Scan to Receive Delivery</p>
+
+                                                    <div className="bg-white p-2 rounded-lg shadow-sm border border-yellow-100 mb-3">
+                                                        <QRCodeSVG
+                                                            value={order.delivery.customerConfirmationCode}
+                                                            size={120}
+                                                            level="H"
+                                                        />
                                                     </div>
-                                                    <div className="text-2xl font-mono font-bold text-brand-dark bg-white px-4 py-2 rounded-lg border border-yellow-100 shadow-sm">
+
+                                                    <p className="text-sm text-yellow-700 font-medium mb-1">Confirmation Code</p>
+                                                    <div className="text-xl font-mono font-bold text-brand-dark bg-white px-4 py-1 rounded border border-yellow-100 shadow-sm tracking-widest">
                                                         {order.delivery.customerConfirmationCode}
                                                     </div>
+                                                    <p className="text-[10px] text-yellow-600 mt-2">Show this to the rider upon arrival</p>
                                                 </div>
                                             )}
                                         </div>

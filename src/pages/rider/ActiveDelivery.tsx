@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRider } from '../../context/RiderContext';
 import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaPhone, FaBox } from 'react-icons/fa';
-import { isValidCode, generateQRCodeData } from '../../utils/qrCodeGenerator';
+import { isValidCode } from '../../utils/qrCodeGenerator';
+
 import { QRCodeSVG } from 'qrcode.react';
 
 const ActiveDelivery: React.FC = () => {
@@ -14,6 +15,8 @@ const ActiveDelivery: React.FC = () => {
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const delivery = deliveries.find(d => d.id === id);
+
     React.useEffect(() => {
         if (!currentRider) {
             navigate('/rider/login');
@@ -21,8 +24,6 @@ const ActiveDelivery: React.FC = () => {
     }, [currentRider, navigate]);
 
     if (!currentRider) return null;
-
-    const delivery = deliveries.find(d => d.id === id);
 
     if (!delivery) {
         return (
@@ -182,7 +183,7 @@ const ActiveDelivery: React.FC = () => {
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Commission</span>
-                            <span className="text-gray-500">-₵{Number(delivery.commissionAmount || 0).toFixed(2)}</span>
+                            <span className="text-gray-500">-₵{Number((delivery as any).commissionAmount || 0).toFixed(2)}</span>
                         </div>
                         <div className="border-t pt-2 flex justify-between">
                             <span className="font-bold text-brand-dark">Your Earning</span>
@@ -249,35 +250,13 @@ const ActiveDelivery: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                            <p className="text-yellow-800 text-sm">
-                                <strong>Important:</strong> Show this QR Code to the customer to scan, OR ask for their 6-digit confirmation code.
-                            </p>
-                        </div>
 
-                        {/* Rider QR Code Display */}
-                        <div className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl mb-6 shadow-sm">
-                            <div className="bg-white p-2 rounded-lg">
-                                <QRCodeSVG
-                                    value={generateQRCodeData(delivery.id, delivery.customerConfirmationCode)}
-                                    size={180}
-                                    level="H"
-                                />
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2 font-mono">Scan to Verify</p>
-                            <p className="text-xs text-brand-dark font-bold mt-1 text-center">Order #{delivery.orderId}</p>
-                        </div>
-
-                        <div className="relative flex py-2 items-center mb-4">
-                            <div className="flex-grow border-t border-gray-300"></div>
-                            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR Enter Code</span>
-                            <div className="flex-grow border-t border-gray-300"></div>
-                        </div>
+                        <div id="reader" className="w-full mb-4 rounded-lg overflow-hidden border border-gray-300"></div>
 
                         <form onSubmit={handleCompleteDelivery} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Customer Confirmation Code
+                                    Scan Customer QR or Enter Code
                                 </label>
                                 <input
                                     type="text"
@@ -289,9 +268,6 @@ const ActiveDelivery: React.FC = () => {
                                     required
                                     disabled={loading}
                                 />
-                                <p className="text-xs text-gray-500 mt-2 text-center">
-                                    The customer received this code when they placed their order
-                                </p>
                             </div>
 
                             <button
@@ -299,7 +275,7 @@ const ActiveDelivery: React.FC = () => {
                                 disabled={loading}
                                 className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:bg-green-400"
                             >
-                                <FaCheckCircle /> Mark as Delivered
+                                <FaCheckCircle /> Verify & Complete
                             </button>
                         </form>
                     </div>
@@ -310,7 +286,7 @@ const ActiveDelivery: React.FC = () => {
                         <FaCheckCircle className="text-green-600 text-4xl mx-auto mb-3" />
                         <p className="text-green-700 font-bold text-lg">Delivery Completed!</p>
                         <p className="text-green-600 text-sm mt-2">
-                            Delivered at {new Date(delivery.deliveredAt!).toLocaleString()}
+                            Delivered at {new Date((delivery as any).deliveredAt || Date.now()).toLocaleString()}
                         </p>
                     </div>
                 )}

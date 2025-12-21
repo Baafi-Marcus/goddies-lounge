@@ -195,8 +195,8 @@ const ManageOrders: React.FC = () => {
                         key={status}
                         onClick={() => setFilterStatus(status)}
                         className={`px - 4 py - 2 rounded - full font - medium whitespace - nowrap transition - colors ${filterStatus === status
-                                ? 'bg-brand-dark text-white'
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                            ? 'bg-brand-dark text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                             } `}
                     >
                         {status}
@@ -204,123 +204,157 @@ const ManageOrders: React.FC = () => {
                 ))}
             </div>
 
-            {/* Orders List */}
-            <div className="space-y-4">
-                {loading ? (
-                    <div className="text-center py-10 text-gray-500 flex flex-col items-center">
-                        <FaSpinner className="animate-spin text-3xl mb-2 text-brand-red" />
-                        Loading orders...
-                    </div>
-                ) : filteredOrders.length === 0 ? (
-                    <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-100">
-                        No orders found.
-                    </div>
-                ) : filteredOrders.map((order) => {
-                    // Helper: Format Items from JSONB
-                    const itemsText = Array.isArray(order.items)
-                        ? order.items.map((i: any) => `${i.name} x${i.quantity || 1} `).join(', ')
-                        : 'Items data unavailable';
+            {/* Orders Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Order ID
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Date & Customer
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Items
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Total
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <FaSpinner className="animate-spin text-2xl mb-2 text-brand-red" />
+                                            <span>Loading orders...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredOrders.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                                        No orders found matching the selected filter.
+                                    </td>
+                                </tr>
+                            ) : filteredOrders.map((order) => {
+                                // Helper: Format Items from JSONB
+                                const itemsText = Array.isArray(order.items)
+                                    ? order.items.map((i: any) => `${i.name} x${i.quantity || 1}`).join(', ')
+                                    : 'Items data unavailable';
 
-                    return (
-                        <div key={order.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-6 animate-fade-in text-brand-dark">
-                            <div className="flex-grow">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <span className="font-bold text-lg text-gray-800">#{order.id.slice(0, 8)}...</span>
-                                    <span className={`px - 3 py - 1 rounded - full text - xs font - bold uppercase tracking - wide ${getStatusColor(order.status)} `}>
-                                        {order.status.replace('_', ' ')}
-                                    </span>
-                                    <span className="text-sm text-gray-500">
-                                        {new Date(order.created_at).toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-gray-600 mb-2">
-                                    <span className="font-medium">{order.customer_name || 'Guest User'}</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1 text-sm uppercase font-bold text-brand-dark/70">
-                                        {order.delivery_type === 'delivery' && <FaMotorcycle />} {order.delivery_type}
-                                    </span>
-                                </div>
-                                <p className="text-gray-500 text-sm mb-2 line-clamp-2">
-                                    {itemsText}
-                                </p>
-                                <p className="font-bold text-xl text-brand-red">₵{Number(order.total_amount).toFixed(2)}</p>
-                            </div>
-
-                            <div className="flex flex-col gap-2 min-w-[150px]">
-                                {['pending'].includes(order.status.toLowerCase()) && (
-                                    <button
-                                        onClick={() => handleStatusChange(order.id, 'preparing')}
-                                        className="btn-primary py-2 text-sm flex items-center justify-center gap-2"
-                                    >
-                                        <FaCheck /> Accept
-                                    </button>
-                                )}
-                                {['preparing'].includes(order.status.toLowerCase()) && (
-                                    <button
-                                        onClick={() => handleStatusChange(order.id, 'ready')}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium text-sm transition-colors"
-                                    >
-                                        Mark Ready
-                                    </button>
-                                )}
-
-                                {/* Assign Rider for Ready Delivery Orders */}
-                                {order.status.toLowerCase() === 'ready' && order.delivery_type === 'delivery' && (
-                                    <button
-                                        onClick={() => setAssignModalOpen(order.id)}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <FaUserPlus /> Assign Rider
-                                    </button>
-                                )}
-
-                                {/* Logic for Delivery vs Pickup */}
-                                {['ready'].includes(order.status.toLowerCase()) && order.delivery_type === 'pickup' && (
-                                    <button
-                                        onClick={() => handleStatusChange(order.id, 'delivered')}
-                                        className="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium text-sm transition-colors"
-                                    >
-                                        Complete Pickup
-                                    </button>
-                                )}
-
-                                {['assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
-                                    <div className="text-xs text-center text-gray-500 bg-gray-50 py-2 rounded">
-                                        Rider Assigned
-                                    </div>
-                                )}
-
-                                {!['cancelled', 'delivered', 'assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
-                                    <button
-                                        onClick={() => handleStatusChange(order.id, 'cancelled')}
-                                        className="border border-red-200 text-red-500 hover:bg-red-50 py-2 rounded-lg font-medium text-sm transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                )}
-
-                                {/* Codes Display for Admin */}
-                                {['assigned', 'in_transit', 'delivered'].includes(order.status.toLowerCase()) && (
-                                    <div className="mt-2 space-y-1">
-                                        {/* Rider Code - Visible once assigned */}
-                                        {order.verification_code && !['delivered'].includes(order.status.toLowerCase()) && (
-                                            <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-100 text-yellow-800">
-                                                <span className="font-bold">Rider Code:</span> {order.verification_code}
+                                return (
+                                    <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            #{order.id.slice(0, 8)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-bold text-gray-900">{order.customer_name || 'Guest User'}</div>
+                                            <div className="text-xs text-brand-dark flex items-center gap-1 mt-0.5">
+                                                <FaClock className="text-gray-400" /> {new Date(order.created_at).toLocaleString()}
                                             </div>
-                                        )}
-
-                                        {/* Customer Code - Visible ONLY after delivered per user request */}
-                                        {order.status.toLowerCase() === 'delivered' && order.confirmation_code && (
-                                            <div className="text-xs bg-green-50 p-2 rounded border border-green-100 text-green-800">
-                                                <span className="font-bold">Confirmation Code:</span> {order.confirmation_code}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${order.delivery_type === 'delivery' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'
+                                                }`}>
+                                                {order.delivery_type === 'delivery' && <FaMotorcycle className="mr-1" />}
+                                                {order.delivery_type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-900 max-w-xs truncate" title={itemsText}>
+                                                {itemsText}
                                             </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-brand-red">
+                                            ₵{Number(order.total_amount).toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
+                                                {order.status.replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex flex-col gap-2 items-end">
+                                                {['pending'].includes(order.status.toLowerCase()) && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'preparing')}
+                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                                                    >
+                                                        <FaCheck className="mr-1" /> Accept
+                                                    </button>
+                                                )}
+                                                {['preparing'].includes(order.status.toLowerCase()) && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'ready')}
+                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                                                    >
+                                                        Mark Ready
+                                                    </button>
+                                                )}
+
+                                                {order.status.toLowerCase() === 'ready' && order.delivery_type === 'delivery' && (
+                                                    <button
+                                                        onClick={() => setAssignModalOpen(order.id)}
+                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none"
+                                                    >
+                                                        <FaUserPlus className="mr-1" /> Assign Rider
+                                                    </button>
+                                                )}
+
+                                                {['ready'].includes(order.status.toLowerCase()) && order.delivery_type === 'pickup' && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'delivered')}
+                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                                                    >
+                                                        Complete Pickup
+                                                    </button>
+                                                )}
+
+                                                {!['cancelled', 'delivered', 'assigned', 'in_transit'].includes(order.status.toLowerCase()) && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'cancelled')}
+                                                        className="text-red-600 hover:text-red-900 text-xs underline"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+
+                                                {/* Codes Display */}
+                                                {['assigned', 'in_transit', 'delivered'].includes(order.status.toLowerCase()) && (
+                                                    <div className="flex flex-col gap-1 text-[10px] text-right">
+                                                        {order.verification_code && !['delivered'].includes(order.status.toLowerCase()) && (
+                                                            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded border border-yellow-200">
+                                                                Rider Code: <b>{order.verification_code}</b>
+                                                            </span>
+                                                        )}
+                                                        {order.status.toLowerCase() === 'delivered' && order.confirmation_code && (
+                                                            <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200">
+                                                                Conf: <b>{order.confirmation_code}</b>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Rider Assign Modal */}
