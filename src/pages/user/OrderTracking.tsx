@@ -19,6 +19,7 @@ const OrderTracking: React.FC = () => {
     const { userProfile, loading: authLoading } = useAuth();
     const [activeOrders, setActiveOrders] = useState<Order[]>([]);
     const [orderHistory, setOrderHistory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [scannedMatch, setScannedMatch] = useState<string | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
