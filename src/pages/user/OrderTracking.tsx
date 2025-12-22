@@ -19,7 +19,9 @@ const OrderTracking: React.FC = () => {
     const { userProfile, loading: authLoading } = useAuth();
     const [activeOrders, setActiveOrders] = useState<Order[]>([]);
     const [orderHistory, setOrderHistory] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [scannedMatch, setScannedMatch] = useState<string | null>(null);
+    const [isConfirming, setIsConfirming] = useState(false);
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
     useEffect(() => {
@@ -89,20 +91,22 @@ const OrderTracking: React.FC = () => {
                 try {
                     scanner = new Html5QrcodeScanner(
                         elementId,
-                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                            aspectRatio: 1.0,
+                            // videoConstraints: { facingMode: "environment" } // Usually handled by preference in render
+                        },
                         /* verbose= */ false
                     );
                     scanner.render(async (decodedText: string) => {
                         console.log("Scanned Code:", decodedText);
-                        scanner.clear();
 
-                        try {
-                            await DeliveryService.confirmDeliveryReceipt(activeDeliveryOrder.id, decodedText);
-                            alert("Delivery Confirmed! Enjoy your meal.");
-                            fetchOrders();
-                        } catch (e) {
-                            alert("Verification Failed. Please try again.");
-                            fetchOrders();
+                        if (decodedText === activeDeliveryOrder.delivery?.customerConfirmationCode) {
+                            setScannedMatch(decodedText);
+                            scanner.clear();
+                        } else {
+                            alert("Code Mismatch! Please scan the rider's correct QR code.");
                         }
                     }, () => { });
                 } catch (e) {
@@ -283,7 +287,39 @@ const OrderTracking: React.FC = () => {
                                                 <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
                                                     <p className="text-xs text-green-800 font-bold uppercase mb-3 text-center">Scan Rider's QR Code to Confirm Delivery</p>
 
-                                                    <div id={`reader-${order.id}`} className="w-full mb-3 rounded-lg overflow-hidden border border-green-300"></div>
+                                                    <div id={`reader-${order.id}`} className={`w-full mb-3 rounded-lg overflow-hidden border border-green-300 ${scannedMatch ? 'hidden' : 'block'}`}></div>
+
+                                                    {scannedMatch && (
+                                                        <div className="mb-4 bg-white p-4 rounded-xl border-2 border-green-500 text-center animate-bounce">
+                                                            <FaCheckCircle className="text-green-500 text-3xl mx-auto mb-2" />
+                                                            <p className="text-sm font-bold text-green-700">Scan Successful!</p>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    setIsConfirming(true);
+                                                                    try {
+                                                                        await DeliveryService.confirmDeliveryReceipt(order.id, scannedMatch);
+                                                                        alert("Delivery Confirmed! Enjoy your meal.");
+                                                                        setScannedMatch(null);
+                                                                        fetchOrders();
+                                                                    } catch (e) {
+                                                                        alert("Confirmation failed. Please try again.");
+                                                                    } finally {
+                                                                        setIsConfirming(false);
+                                                                    }
+                                                                }}
+                                                                disabled={isConfirming}
+                                                                className="mt-3 w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                {isConfirming ? 'Confirming...' : 'Complete & Confirm Receipt'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setScannedMatch(null)}
+                                                                className="mt-2 text-xs text-gray-500 underline"
+                                                            >
+                                                                Rescan
+                                                            </button>
+                                                        </div>
+                                                    )}
 
                                                     <div className="mt-4 bg-white/50 rounded-lg p-3 text-center border border-green-200 shadow-sm">
                                                         <p className="text-[10px] text-green-700 uppercase font-black mb-1">Your Secret Delivery Code</p>

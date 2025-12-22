@@ -44,6 +44,12 @@ const RiderDeliveries: React.FC = () => {
     const pastDeliveries = deliveries.filter(d => ['delivered', 'cancelled'].includes(d.status))
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+    const totalEarnings = pastDeliveries
+        .filter(d => d.status === 'delivered')
+        .reduce((sum, d) => sum + Number(d.riderEarning || d.rider_earning || 0), 0);
+
+    const totalCompleted = pastDeliveries.filter(d => d.status === 'delivered').length;
+
     const handleAcceptDelivery = async (deliveryId: string) => {
         if (!currentRider) return;
         try {
@@ -92,6 +98,25 @@ const RiderDeliveries: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24">
+            {/* Rider Stats Summary */}
+            <div className="px-6 pt-8">
+                <div className="bg-brand-dark rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                    <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                    <div className="relative z-10 flex justify-between items-end">
+                        <div className="space-y-1">
+                            <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Total Earnings</p>
+                            <p className="text-4xl font-black">₵{totalEarnings.toFixed(2)}</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="bg-white/10 px-3 py-2 rounded-2xl backdrop-blur-md inline-block">
+                                <p className="text-[10px] text-white/60 font-bold uppercase">Total Orders</p>
+                                <p className="text-xl font-black leading-none mt-1">{totalCompleted}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Tabs */}
             <div className="px-6 pt-6 mb-6">
                 <div className="bg-white p-1 rounded-xl shadow-sm flex text-center">
