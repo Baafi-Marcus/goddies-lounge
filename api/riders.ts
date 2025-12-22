@@ -12,12 +12,12 @@ export default async function handler(
             const { id, registrationNumber } = request.query;
 
             if (id) {
-                const riders = await sql`SELECT r.*, u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.id = ${id as string} `;
+                const riders = await sql`SELECT r.*, r.payment_preference as "paymentPreference", r.momo_number as "momoNumber", u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.id = ${id as string} `;
                 return response.status(200).json(riders[0]);
             }
 
             if (registrationNumber) {
-                const riders = await sql`SELECT r.*, u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.registration_number = ${registrationNumber as string} `;
+                const riders = await sql`SELECT r.*, r.payment_preference as "paymentPreference", r.momo_number as "momoNumber", u.full_name as name, u.phone, u.email FROM riders r JOIN users u ON r.id = u.id WHERE r.registration_number = ${registrationNumber as string} `;
                 return response.status(200).json(riders[0]);
             }
 
@@ -28,6 +28,8 @@ export default async function handler(
           COALESCE(r.total_deliveries, 0) as "totalDeliveries",
           COALESCE(r.total_earnings, 0) as "totalEarnings",
           COALESCE(r.current_balance, 0) as "currentBalance",
+          r.payment_preference as "paymentPreference",
+          r.momo_number as "momoNumber",
           u.full_name as name, u.phone, u.email 
         FROM riders r 
         JOIN users u ON r.id = u.id
