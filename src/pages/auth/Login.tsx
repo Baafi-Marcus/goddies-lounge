@@ -43,8 +43,10 @@ const Login: React.FC = () => {
     const [error, setError] = useState('');
 
     // Login State
+    const [loginMethod, setLoginMethod] = useState<'password' | 'phone'>('password');
     const [loginIdentifier, setLoginIdentifier] = useState(''); // Username or Email
     const [loginPassword, setLoginPassword] = useState('');
+    const [loginStep, setLoginStep] = useState<1 | 2>(1); // 1: Phone, 2: OTP
 
     // Register State
     const [regStep, setRegStep] = useState<1 | 2 | 3>(1); // 1: Phone, 2: OTP, 3: Username/Pass
@@ -124,7 +126,11 @@ const Login: React.FC = () => {
             const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
             window.confirmationResult = confirmationResult;
             setVerificationId(confirmationResult);
-            setRegStep(2);
+            if (activeTab === 'login') {
+                setLoginStep(2);
+            } else {
+                setRegStep(2);
+            }
             setLoading(false);
         } catch (err: any) {
             console.error(err);
@@ -153,7 +159,13 @@ const Login: React.FC = () => {
             // This logs the user in as a Phone User
             await verificationId.confirm(otp);
             // User is now authenticated with Phone
-            setRegStep(3); // Move to set Username/Password
+            if (activeTab === 'login') {
+                // If logging in, just go home
+                navigate(from, { replace: true });
+            } else {
+                // If registering, move to set Username/Password
+                setRegStep(3);
+            }
             setLoading(false);
         } catch (err: any) {
             console.error(err);
@@ -236,13 +248,13 @@ const Login: React.FC = () => {
                 <div className="flex gap-2 border-b border-white/10">
                     <button
                         className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors rounded-t-xl ${activeTab === 'login' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
-                        onClick={() => setActiveTab('login')}
+                        onClick={() => { setActiveTab('login'); setLoginStep(1); }}
                     >
                         Login
                     </button>
                     <button
                         className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors rounded-t-xl ${activeTab === 'register' ? 'bg-brand-yellow text-brand-dark' : 'text-gray-400 hover:text-white bg-black/20'} `}
-                        onClick={() => setActiveTab('register')}
+                        onClick={() => { setActiveTab('register'); setRegStep(1); }}
                     >
                         Register
                     </button>
@@ -258,61 +270,144 @@ const Login: React.FC = () => {
                     {/* --- LOGIN FORM --- */}
                     {activeTab === 'login' && (
                         <div className="space-y-6">
-                            <form onSubmit={handleLoginSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Username</label>
-                                    <div className="relative">
-                                        <FaUser className="absolute left-4 top-4 text-gray-500" />
-                                        <input
-                                            type="text"
-                                            placeholder="Enter your username"
-                                            value={loginIdentifier}
-                                            onChange={e => setLoginIdentifier(e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white placeholder-gray-500 backdrop-blur-sm transition-all"
-                                            required
-                                        />
-                                    </div>
+                            {/* Login Method Toggle */}
+                            {loginStep === 1 && (
+                                <div className="flex p-1 bg-black/20 rounded-xl border border-white/5">
+                                    <button
+                                        onClick={() => setLoginMethod('password')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${loginMethod === 'password' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500'}`}
+                                    >
+                                        Password
+                                    </button>
+                                    <button
+                                        onClick={() => setLoginMethod('phone')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${loginMethod === 'phone' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500'}`}
+                                    >
+                                        Phone / OTP
+                                    </button>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Password</label>
-                                    <div className="relative">
-                                        <FaLock className="absolute left-4 top-4 text-gray-500" />
-                                        <input
-                                            type="password"
-                                            placeholder="Enter your password"
-                                            value={loginPassword}
-                                            onChange={e => setLoginPassword(e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white placeholder-gray-500 backdrop-blur-sm transition-all"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-brand-red text-white py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
-                                >
-                                    {loading ? 'Signing In...' : 'Sign In'}
-                                </button>
-                            </form>
+                            )}
 
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-white/20"></div>
+                            {loginMethod === 'password' ? (
+                                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Username</label>
+                                        <div className="relative">
+                                            <FaUser className="absolute left-4 top-4 text-gray-500" />
+                                            <input
+                                                type="text"
+                                                placeholder="Enter your username"
+                                                value={loginIdentifier}
+                                                onChange={e => setLoginIdentifier(e.target.value)}
+                                                className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white placeholder-gray-500 backdrop-blur-sm transition-all"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Password</label>
+                                        <div className="relative">
+                                            <FaLock className="absolute left-4 top-4 text-gray-500" />
+                                            <input
+                                                type="password"
+                                                placeholder="Enter your password"
+                                                value={loginPassword}
+                                                onChange={e => setLoginPassword(e.target.value)}
+                                                className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white placeholder-gray-500 backdrop-blur-sm transition-all"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-brand-red text-white py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+                                    >
+                                        {loading ? 'Signing In...' : 'Sign In'}
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="space-y-4">
+                                    {loginStep === 1 ? (
+                                        <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Phone Number</label>
+                                                <div className="relative">
+                                                    <FaPhone className="absolute left-4 top-4 text-gray-500" />
+                                                    <input
+                                                        type="tel"
+                                                        placeholder="e.g. 054 123 4567"
+                                                        value={phoneNumber}
+                                                        onChange={e => setPhoneNumber(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white placeholder-gray-500 backdrop-blur-sm transition-all"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div id="recaptcha-container"></div>
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="w-full bg-brand-yellow text-brand-dark py-4 rounded-xl font-bold hover:bg-yellow-400 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+                                            >
+                                                {loading ? 'Sending Code...' : 'Get OTP Code'}
+                                            </button>
+                                        </form>
+                                    ) : (
+                                        <form onSubmit={handleOtpSubmit} className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Verification Code</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="123456"
+                                                    value={otp}
+                                                    onChange={e => setOtp(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none text-white text-center text-2xl placeholder-gray-600 letter-spacing-widest backdrop-blur-sm transition-all"
+                                                    required
+                                                    autoFocus
+                                                />
+                                                <p className="text-center text-gray-400 text-xs mt-2">Sent to {phoneNumber}</p>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="w-full bg-brand-yellow text-brand-dark py-4 rounded-xl font-bold hover:bg-yellow-400 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+                                            >
+                                                {loading ? 'Verifying...' : 'Verify & Login'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setLoginStep(1); setOtp(''); }}
+                                                className="w-full text-gray-400 text-sm hover:text-white transition-colors"
+                                            >
+                                                Change Number
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
-                                <div className="relative flex justify-center">
-                                    <span className="bg-transparent px-4 text-sm text-gray-400">or</span>
-                                </div>
-                            </div>
+                            )}
 
-                            <button
-                                onClick={handleGoogleLogin}
-                                disabled={loading}
-                                className="w-full py-4 px-6 flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
-                            >
-                                <FaGoogle className="text-red-500 text-xl" />
-                                Sign in with Google
-                            </button>
+                            {loginStep === 1 && (
+                                <>
+                                    <div className="relative py-2">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-white/20"></div>
+                                        </div>
+                                        <div className="relative flex justify-center">
+                                            <span className="bg-transparent px-4 text-sm text-gray-400">or</span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleGoogleLogin}
+                                        disabled={loading}
+                                        className="w-full py-4 px-6 flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+                                    >
+                                        <FaGoogle className="text-red-500 text-xl" />
+                                        Sign in with Google
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
 
