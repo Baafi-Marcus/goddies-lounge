@@ -15,7 +15,9 @@ export default async function handler(
                 const results = await sql`
                   SELECT 
                    d.id, d.order_id as "orderId", d.customer_id as "customerId",
-                   d.pickup_location as "pickupLocation", d.delivery_location as "deliveryLocation",
+                   d.pickup_location as "pickupLocation", 
+                   split_part(d.delivery_location, ' - ', 1) as "location",
+                   split_part(d.delivery_location, ' - ', 2) as "deliveryAddress",
                    d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
                    d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
                    d.status, d.verification_code as "verificationCode", 
@@ -37,7 +39,9 @@ export default async function handler(
                 const deliveries = await sql`
           SELECT 
             d.id, d.order_id as "orderId", d.customer_id as "customerId",
-            d.pickup_location as "pickupLocation", d.delivery_location as "deliveryLocation",
+            d.pickup_location as "pickupLocation", 
+            split_part(d.delivery_location, ' - ', 1) as "location",
+            split_part(d.delivery_location, ' - ', 2) as "deliveryAddress",
             d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
             d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
             d.status, d.verification_code as "verificationCode", 
@@ -55,7 +59,9 @@ export default async function handler(
             const allDeliveries = await sql`
                 SELECT
                     d.id, d.order_id as "orderId", d.customer_id as "customerId",
-                    d.pickup_location as "pickupLocation", d.delivery_location as "deliveryLocation",
+                    d.pickup_location as "pickupLocation", 
+                    split_part(d.delivery_location, ' - ', 1) as "location",
+                    split_part(d.delivery_location, ' - ', 2) as "deliveryAddress",
                     d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
                     d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
                     d.status, d.verification_code as "verificationCode",

@@ -1,3 +1,4 @@
+import React from 'react';
 import { FaShoppingCart, FaUtensils, FaCalendarCheck, FaDollarSign, FaHistory, FaArrowRight } from 'react-icons/fa';
 import { OrderService, MenuService, ReservationService } from '../../services/neon';
 import { Link } from 'react-router-dom';
