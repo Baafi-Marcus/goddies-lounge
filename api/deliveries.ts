@@ -74,6 +74,7 @@ export default async function handler(
                 FROM deliveries d 
                 LEFT JOIN users u ON d.customer_id::text = u.id::text
                 LEFT JOIN orders o ON d.order_id::text = o.id::text
+                LEFT JOIN riders r ON d.rider_id = r.id
                 ORDER BY d.created_at DESC
             `;
             return response.status(200).json(allDeliveries);
