@@ -163,12 +163,12 @@ const ManageDeliveries: React.FC = () => {
                                         <div className="mt-2 space-y-1">
                                             {delivery.orderPaymentMethod === 'cash' && !delivery.cashSettledByRider && (
                                                 <div className="bg-red-50 text-red-700 p-1.5 rounded text-[10px] font-bold border border-red-100 animate-pulse">
-                                                    ⚠️ CASH OWED BY RIDER: ₵{delivery.orderTotal.toFixed(2)}
+                                                    ⚠️ CASH OWED BY RIDER: ₵{Number(delivery.orderTotal || 0).toFixed(2)}
                                                 </div>
                                             )}
                                             {!delivery.earningPaidByAdmin && (
                                                 <div className="bg-orange-50 text-orange-700 p-1.5 rounded text-[10px] font-bold border border-orange-100">
-                                                    ⏳ PAYOUT PENDING: ₵{delivery.riderEarning.toFixed(2)}
+                                                    ⏳ PAYOUT PENDING: ₵{Number(delivery.riderEarning || 0).toFixed(2)}
                                                 </div>
                                             )}
                                         </div>
