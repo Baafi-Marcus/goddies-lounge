@@ -47,6 +47,7 @@ export default async function handler(
             d.status, d.verification_code as "verificationCode", 
             d.confirmation_code as "customerConfirmationCode", d.created_at, d.rider_id as "riderId",
             d.cancellation_reason as "cancellationReason", d.cancelled_at as "cancelledAt",
+            d.cash_settled_by_rider as "cashSettledByRider", d.earning_paid_by_admin as "earningPaidByAdmin",
             u.full_name as "customerName", u.phone as "customerPhone"
           FROM deliveries d
           LEFT JOIN users u ON d.customer_id::text = u.id::text
@@ -67,7 +68,9 @@ export default async function handler(
                     d.status, d.verification_code as "verificationCode",
                     d.confirmation_code as "customerConfirmationCode", d.created_at, d.rider_id as "riderId",
                     d.cancellation_reason as "cancellationReason", d.cancelled_at as "cancelledAt",
-                    u.full_name as "customerName", u.phone as "customerPhone", o.total_amount as "orderTotal"
+                    d.cash_settled_by_rider as "cashSettledByRider", d.earning_paid_by_admin as "earningPaidByAdmin",
+                    u.full_name as "customerName", u.phone as "customerPhone", o.total_amount as "orderTotal", 
+                    o.payment_method as "orderPaymentMethod", r.payment_preference as "riderPaymentPreference"
                 FROM deliveries d 
                 LEFT JOIN users u ON d.customer_id::text = u.id::text
                 LEFT JOIN orders o ON d.order_id::text = o.id::text
@@ -160,8 +163,19 @@ export default async function handler(
                 const [d] = await sql`UPDATE deliveries SET status = 'in_transit', picked_up_at = NOW() WHERE id = ${deliveryId} RETURNING order_id`;
                 if (d?.order_id) await sql`UPDATE orders SET status = 'in_transit' WHERE id = ${d.order_id} `;
             } else if (action === 'complete') {
-                const [d] = await sql`UPDATE deliveries SET status = 'delivered', delivered_at = NOW() WHERE id = ${deliveryId} RETURNING order_id`;
-                await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${earning}, current_balance = current_balance + ${earning} WHERE id = ${riderId} `;
+                const [rider] = await sql`SELECT payment_preference, momo_number FROM riders WHERE id = ${riderId}`;
+                const autoPay = rider?.payment_preference === 'momo';
+
+                const [d] = await sql`UPDATE deliveries SET status = 'delivered', delivered_at = NOW(), earning_paid_by_admin = ${autoPay} WHERE id = ${deliveryId} RETURNING order_id`;
+
+                if (autoPay) {
+                    // Automatic Hubtel Payout Sent
+                    console.log(`[PAYOUT] Automatic Hubtel transfer of ₵${earning} sent to ${rider.momo_number}`);
+                    await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${earning} WHERE id = ${riderId} `;
+                } else {
+                    await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${earning}, current_balance = current_balance + ${earning} WHERE id = ${riderId} `;
+                }
+
                 if (d?.order_id) await sql`UPDATE orders SET status = 'delivered' WHERE id = ${d.order_id} `;
             } else if (action === 'user_confirm') {
                 const { orderId, code } = request.body;
@@ -174,15 +188,36 @@ export default async function handler(
                 // If scanned text is valid...
 
                 // 2. Mark as delivered
-                const [d] = await sql`UPDATE deliveries SET status = 'delivered', delivered_at = NOW() WHERE id = ${delivery.id} RETURNING order_id, rider_id, rider_earning`;
+                const [rider] = await sql`SELECT payment_preference, momo_number FROM riders WHERE id = ${delivery.rider_id}`;
+                const autoPay = rider?.payment_preference === 'momo';
+
+                const [d] = await sql`UPDATE deliveries SET status = 'delivered', delivered_at = NOW(), earning_paid_by_admin = ${autoPay} WHERE id = ${delivery.id} RETURNING order_id, rider_id, rider_earning`;
 
                 // 3. Pay the rider
                 if (d && d.rider_id) {
-                    await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${d.rider_earning}, current_balance = current_balance + ${d.rider_earning} WHERE id = ${d.rider_id} `;
+                    if (autoPay) {
+                        console.log(`[PAYOUT] Automatic Hubtel transfer of ₵${d.rider_earning} sent to ${rider.momo_number}`);
+                        await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${d.rider_earning} WHERE id = ${d.rider_id} `;
+                    } else {
+                        await sql`UPDATE riders SET total_deliveries = total_deliveries + 1, total_earnings = total_earnings + ${d.rider_earning}, current_balance = current_balance + ${d.rider_earning} WHERE id = ${d.rider_id} `;
+                    }
                 }
 
                 // 4. Update Order
                 if (d?.order_id) await sql`UPDATE orders SET status = 'delivered' WHERE id = ${d.order_id} `;
+
+            } else if (action === 'confirm_cash_receipt') {
+                // Admin confirms they received cash from the rider for a COD order
+                await sql`UPDATE deliveries SET cash_settled_by_rider = TRUE WHERE id = ${deliveryId}`;
+
+            } else if (action === 'confirm_rider_payout') {
+                // Admin confirms they paid the rider their earning in cash at the restaurant
+                await sql`UPDATE deliveries SET earning_paid_by_admin = TRUE WHERE id = ${deliveryId}`;
+                // Subtract from balance as it's now paid
+                const [d] = await sql`SELECT rider_id, rider_earning FROM deliveries WHERE id = ${deliveryId}`;
+                if (d) {
+                    await sql`UPDATE riders SET current_balance = current_balance - ${d.rider_earning} WHERE id = ${d.rider_id}`;
+                }
             }
 
             return response.status(200).json({ success: true });

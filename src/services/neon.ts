@@ -99,6 +99,14 @@ export const DeliveryService = {
   async confirmDeliveryReceipt(orderId: string, code: string) {
     const { data } = await api.patch('/deliveries', { action: 'user_confirm', orderId, code });
     return data;
+  },
+
+  async settleCashReceipt(deliveryId: string) {
+    await api.patch('/deliveries', { action: 'confirm_cash_receipt', deliveryId });
+  },
+
+  async settleRiderPayout(deliveryId: string) {
+    await api.patch('/deliveries', { action: 'confirm_rider_payout', deliveryId });
   }
 };
 

@@ -17,6 +17,7 @@ interface Order {
     delivery_address?: string;
     verification_code?: string;
     confirmation_code?: string;
+    pickup_time?: string;
 }
 
 interface Rider {
@@ -274,6 +275,24 @@ const ManageOrders: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-gray-800 font-medium">{order.delivery_address || 'No address provided'}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Scheduled Time */}
+                                            {order.pickup_time && (
+                                                <div className="flex items-start gap-3 md:col-span-2">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${order.delivery_type === 'pickup' ? 'bg-brand-yellow/20' : 'bg-green-50'}`}>
+                                                        <FaClock className={order.delivery_type === 'pickup' ? 'text-brand-dark text-xs' : 'text-green-600 text-xs'} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-800 font-bold">
+                                                            {order.delivery_type === 'pickup' ? 'Scheduled Pickup: ' : 'Requested Delivery: '}
+                                                            {order.pickup_time}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 uppercase font-bold">
+                                                            {order.delivery_type === 'pickup' ? 'at restaurant' : 'at customer location'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             )}

@@ -25,6 +25,10 @@ interface RiderContextType {
 
     // Rider stats
     loadRiderStats: (riderId: string) => Promise<void>;
+
+    // Settlement
+    settleCashReceipt: (deliveryId: string) => Promise<void>;
+    settleRiderPayout: (deliveryId: string) => Promise<void>;
 }
 
 const RiderContext = createContext<RiderContextType | undefined>(undefined);
@@ -211,6 +215,16 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await loadData();
     };
 
+    const settleCashReceipt = async (deliveryId: string) => {
+        await DeliveryService.settleCashReceipt(deliveryId);
+        await loadData();
+    };
+
+    const settleRiderPayout = async (deliveryId: string) => {
+        await DeliveryService.settleRiderPayout(deliveryId);
+        await loadData();
+    };
+
     return (
         <RiderContext.Provider
             value={{
@@ -228,6 +242,8 @@ export const RiderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 pickupDelivery,
                 completeDelivery,
                 loadRiderStats,
+                settleCashReceipt,
+                settleRiderPayout,
             }}
         >
             {children}

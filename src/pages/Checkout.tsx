@@ -28,11 +28,7 @@ const schema = yup.object().shape({
         otherwise: (schema) => schema.notRequired(),
     }),
     // Pickup Fields
-    pickupTime: yup.string().when('orderType', {
-        is: 'pickup',
-        then: (schema) => schema.required('Pickup time is required'),
-        otherwise: (schema) => schema.notRequired(),
-    }),
+    pickupTime: yup.string().required('Scheduled time is required'),
 });
 
 interface CheckoutFormValues {
@@ -40,9 +36,9 @@ interface CheckoutFormValues {
     name: string;
     phone: string;
     paymentMethod: 'hubtel' | 'cash';
-    locationId?: string;
-    address?: string;
-    pickupTime?: string;
+    locationId: string | undefined;
+    address: string | undefined;
+    pickupTime: string;
 }
 
 const Checkout: React.FC = () => {
@@ -78,15 +74,25 @@ const Checkout: React.FC = () => {
         }
     }, [cart, currentUser, loading, navigate]);
 
-    const { register, handleSubmit, control, watch, setValue, trigger, formState: { errors } } = useForm<CheckoutFormValues>({
+    const { register, handleSubmit, control, setValue, trigger, formState: { errors } } = useForm<CheckoutFormValues>({
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
             paymentMethod: 'cash',
             name: userProfile?.full_name || '',
             phone: userProfile?.phone || '',
+            pickupTime: ''
         }
     });
+
+    const quickFill = () => {
+        setValue('name', 'Test User');
+        setValue('phone', '0241234567');
+        if (locations.length > 0) {
+            setValue('locationId', locations[0].id);
+            setValue('address', 'Near the big blue gate, East Legon');
+        }
+    };
 
     // Update form values when user profile loads
     useEffect(() => {
@@ -163,8 +169,9 @@ const Checkout: React.FC = () => {
                 deliveryType: data.orderType,
                 deliveryAddress: data.orderType === 'delivery'
                     ? `${locations.find(l => l.id === data.locationId)?.name || ''} - ${data.address}`
-                    : `Goodies Lounge & Wine Bar, Asafo Akim (Pickup at ${data.pickupTime})`,
-                paymentMethod: data.paymentMethod
+                    : `Goodies Lounge & Wine Bar, Asafo Akim`,
+                paymentMethod: data.paymentMethod,
+                pickupTime: data.pickupTime
             };
 
             await OrderService.createOrder(orderData);
@@ -233,22 +240,40 @@ const Checkout: React.FC = () => {
                     {/* Main Content Area */}
                     <div className="w-full lg:w-2/3">
 
-                        {/* Saved Details Banner */}
-                        {savedDetailsAvailable && step === 1 && (
-                            <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-xl flex justify-between items-center animate-fade-in">
-                                <div>
-                                    <p className="font-bold text-blue-800 text-sm">Return Customer?</p>
-                                    <p className="text-xs text-blue-600">Use your details from the last order.</p>
+                        {/* Saved & Debug Actions */}
+                        <div className="flex gap-4 mb-6 animate-fade-in">
+                            {savedDetailsAvailable && step === 1 && (
+                                <div className="flex-1 bg-blue-50 border border-blue-100 p-4 rounded-xl flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold text-blue-800 text-sm">Return Customer?</p>
+                                        <p className="text-xs text-blue-600">Use items from last time.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={loadSavedDetails}
+                                        className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition"
+                                    >
+                                        Use Saved
+                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={loadSavedDetails}
-                                    className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition"
-                                >
-                                    Use Saved Details
-                                </button>
-                            </div>
-                        )}
+                            )}
+
+                            {step === 2 && (
+                                <div className="flex-1 bg-gray-900 border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                                    <div className="text-white">
+                                        <p className="font-bold text-sm">Testing Mode</p>
+                                        <p className="text-[10px] opacity-70">Fill form instantly</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={quickFill}
+                                        className="px-4 py-2 bg-brand-red text-white text-xs font-bold rounded-lg hover:bg-red-600 transition"
+                                    >
+                                        Quick Fill
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Step 1: Preference */}
                         {step === 1 && (
@@ -280,8 +305,8 @@ const Checkout: React.FC = () => {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-6">
-                                    {orderType === 'delivery' ? (
-                                        <div className="animate-fade-in group">
+                                    {orderType === 'delivery' && (
+                                        <div className="animate-fade-in group mb-6">
                                             <label className="block text-sm font-bold text-gray-800 mb-2">Select Delivery Location</label>
                                             <div className="relative">
                                                 <select {...register('locationId')} className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all appearance-none cursor-pointer bg-white hover:border-brand-red">
@@ -298,28 +323,32 @@ const Checkout: React.FC = () => {
                                             </div>
                                             <p className="text-red-500 text-xs mt-2 pl-1 font-medium">{errors.locationId?.message}</p>
                                         </div>
-                                    ) : (
-                                        <div className="animate-fade-in">
-                                            <label className="block text-sm font-bold text-gray-800 mb-2">Select Pickup Time</label>
-                                            <Controller
-                                                control={control}
-                                                name="pickupTime"
-                                                render={({ field: { onChange, value } }) => (
-                                                    <ScrollTimePicker
-                                                        value={value || ''}
-                                                        onChange={onChange}
-                                                        startTime="10:00"
-                                                        endTime="22:00"
-                                                    />
-                                                )}
-                                            />
-                                            <p className="text-red-500 text-xs mt-2 pl-1 font-medium">{errors.pickupTime?.message}</p>
-                                            <div className="flex items-start gap-2 mt-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
-                                                <span className="font-bold">Note:</span>
-                                                Please allow at least 30-45 minutes for preparation depending on the order size.
-                                            </div>
-                                        </div>
                                     )}
+
+                                    <div className="animate-fade-in">
+                                        <label className="block text-sm font-bold text-gray-800 mb-2">
+                                            {orderType === 'delivery' ? 'Schedule Delivery Time' : 'Select Pickup Time'}
+                                        </label>
+                                        <Controller
+                                            control={control}
+                                            name="pickupTime"
+                                            render={({ field: { onChange, value } }) => (
+                                                <ScrollTimePicker
+                                                    value={value || ''}
+                                                    onChange={onChange}
+                                                    startTime="10:00"
+                                                    endTime="22:00"
+                                                />
+                                            )}
+                                        />
+                                        <p className="text-red-500 text-xs mt-2 pl-1 font-medium">{errors.pickupTime?.message}</p>
+                                        <div className="flex items-start gap-2 mt-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
+                                            <span className="font-bold">Note:</span>
+                                            {orderType === 'delivery'
+                                                ? 'Deliveries usually take 45-60 minutes depending on distance and traffic.'
+                                                : 'Please allow at least 30-45 minutes for preparation depending on the order size.'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

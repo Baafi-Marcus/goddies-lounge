@@ -44,10 +44,10 @@ export default async function handler(
         }
 
         if (method === 'POST') {
-            const { userId, items, totalAmount, status, deliveryType, deliveryAddress, paymentMethod } = request.body;
+            const { userId, items, totalAmount, status, deliveryType, deliveryAddress, paymentMethod, pickupTime } = request.body;
 
             const [newOrder] = await sql`
-        INSERT INTO orders(user_id, items, total_amount, status, delivery_type, delivery_address, payment_method)
+        INSERT INTO orders(user_id, items, total_amount, status, delivery_type, delivery_address, payment_method, pickup_time)
         VALUES(
           ${userId},
           ${JSON.stringify(items)},
@@ -55,7 +55,8 @@ export default async function handler(
           ${status || 'pending'},
           ${deliveryType},
           ${deliveryAddress},
-          ${paymentMethod}
+          ${paymentMethod},
+          ${pickupTime}
         )
         RETURNING *
       `;

@@ -13,6 +13,7 @@ interface Order {
     items: any;
     delivery_type: 'delivery' | 'pickup';
     delivery?: any;
+    pickup_time?: string;
 }
 
 const OrderTracking: React.FC = () => {
@@ -238,6 +239,21 @@ const OrderTracking: React.FC = () => {
                                                     </li>
                                                 ))}
                                             </ul>
+
+                                            {!isHistory && !isDelivery && order.status === 'ready' && (
+                                                <div className="mt-6 p-6 bg-brand-yellow/10 rounded-2xl border-2 border-brand-yellow/30 text-center">
+                                                    <FaBoxOpen className="text-4xl text-brand-yellow mx-auto mb-3" />
+                                                    <h3 className="font-bold text-lg text-brand-dark">Order Ready for Pickup!</h3>
+                                                    <p className="text-gray-700 mt-1">Please head to the restaurant to collect your meal.</p>
+                                                    {order.pickup_time && (
+                                                        <p className="mt-2 text-brand-dark font-black">Scheduled Time: {order.pickup_time}</p>
+                                                    )}
+                                                    <div className="mt-4 p-4 bg-white rounded-xl shadow-inner inline-block">
+                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Your Pickup Code</p>
+                                                        <p className="text-3xl font-black text-brand-dark tracking-widest">{order.id.slice(0, 6).toUpperCase()}</p>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* User's Secret Code & Scanner for Rider's Phone */}
                                             {!isHistory && isDelivery && ['in_transit'].includes(order.status) && (

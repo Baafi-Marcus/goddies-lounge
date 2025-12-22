@@ -14,6 +14,8 @@ export interface Rider {
     currentBalance: number;
     createdAt: string;
     lastActive: string;
+    paymentPreference?: 'momo' | 'cash';
+    momoNumber?: string;
 }
 
 export interface Delivery {
@@ -36,6 +38,10 @@ export interface Delivery {
     customerConfirmationCode: string;
     orderTotal: number;
     orderItems: string;
+    cashSettledByRider?: boolean;
+    earningPaidByAdmin?: boolean;
+    orderPaymentMethod?: string;
+    riderPaymentPreference?: string;
 }
 
 // Sample rider data

@@ -36,13 +36,6 @@ const ScrollTimePicker: React.FC<ScrollTimePickerProps> = ({
         setTimeSlots(slots);
     }, [startTime, endTime]);
 
-    // Handle Scroll Selection via IntersectionObserver could be complex, 
-    // simpler approach: Click to select or just visual scroll with manual click.
-    // For a true "wheel", we need to detect the center element.
-
-    // Let's implement a Click-to-Select list that LOOKS like a wheel first for stability,
-    // or a simple scroll list. 
-    // Given the request "scroll-wheel", let's make a vertical scroll snap list where the snapped item is "selected".
 
     return (
         <div className="relative h-40 w-full overflow-hidden bg-gray-50 rounded-xl border border-gray-200 shadow-inner group">
@@ -60,7 +53,18 @@ const ScrollTimePicker: React.FC<ScrollTimePickerProps> = ({
                     return (
                         <div
                             key={time}
-                            onClick={() => onChange(time)}
+                            onClick={() => {
+                                onChange(time);
+                                // Center the clicked item
+                                if (scrollContainerRef.current) {
+                                    const container = scrollContainerRef.current;
+                                    const item = container.children[timeSlots.indexOf(time)] as HTMLElement;
+                                    container.scrollTo({
+                                        top: item.offsetTop - container.offsetHeight / 2 + item.offsetHeight / 2,
+                                        behavior: 'smooth'
+                                    });
+                                }
+                            }}
                             className={`h-10 flex items-center justify-center snap-center cursor-pointer transition-all duration-200 
                                 ${isSelected ? 'font-bold text-brand-dark scale-110' : 'text-gray-400 scale-90 hover:text-gray-600'}
                             `}

@@ -18,6 +18,8 @@ const RiderProfile: React.FC = () => {
     const [editPhone, setEditPhone] = useState('');
     const [editVehicleType, setEditVehicleType] = useState('');
     const [editVehicleNumber, setEditVehicleNumber] = useState('');
+    const [editPaymentPreference, setEditPaymentPreference] = useState<'momo' | 'cash'>('momo');
+    const [editMomoNumber, setEditMomoNumber] = useState('');
 
     // Password change state
     const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -41,6 +43,8 @@ const RiderProfile: React.FC = () => {
         setEditPhone(currentRider.phone || '');
         setEditVehicleType(currentRider.vehicleType || '');
         setEditVehicleNumber(currentRider.registrationNumber || '');
+        setEditPaymentPreference(currentRider.paymentPreference || 'momo');
+        setEditMomoNumber(currentRider.momoNumber || '');
     }, [currentRider, navigate]);
 
     const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -57,7 +61,9 @@ const RiderProfile: React.FC = () => {
                 name: editName,
                 phone: editPhone,
                 vehicleType: editVehicleType,
-                registrationNumber: editVehicleNumber
+                registrationNumber: editVehicleNumber,
+                paymentPreference: editPaymentPreference,
+                momoNumber: editMomoNumber
             });
             showMessage('Profile updated successfully!', 'success');
             setIsEditing(false);
@@ -247,6 +253,65 @@ const RiderProfile: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Payment Preference */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <FaToggleOn className="text-brand-yellow" /> Payment Preference
+                            </h2>
+                            <p className="text-sm text-gray-500 mb-6">Choose how you want to receive your earnings.</p>
+
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <button
+                                    onClick={() => setEditPaymentPreference('momo')}
+                                    disabled={!isEditing}
+                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${editPaymentPreference === 'momo'
+                                        ? 'border-brand-red bg-red-50 text-brand-red'
+                                        : 'border-gray-100 bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                        } ${!isEditing && 'opacity-70'}`}
+                                >
+                                    <FaPhone size={24} />
+                                    <span className="font-bold">Mobile Money</span>
+                                </button>
+                                <button
+                                    onClick={() => setEditPaymentPreference('cash')}
+                                    disabled={!isEditing}
+                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${editPaymentPreference === 'cash'
+                                        ? 'border-brand-red bg-red-50 text-brand-red'
+                                        : 'border-gray-100 bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                        } ${!isEditing && 'opacity-70'}`}
+                                >
+                                    <FaSignOutAlt size={24} />
+                                    <span className="font-bold">Cash at Lounge</span>
+                                </button>
+                            </div>
+
+                            {editPaymentPreference === 'momo' && (
+                                <div className="animate-fade-in">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">MoMo Number (Network & Number)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="MTN - 024XXXXXXX"
+                                        value={editMomoNumber}
+                                        onChange={(e) => setEditMomoNumber(e.target.value)}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-brand-red outline-none disabled:bg-gray-100 font-bold"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-2">
+                                        Payouts will be sent automatically to this number upon delivery completion.
+                                    </p>
+                                </div>
+                            )}
+
+                            {editPaymentPreference === 'cash' && (
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3 animate-fade-in">
+                                    <div className="text-orange-600 mt-1">💡</div>
+                                    <p className="text-xs text-orange-800">
+                                        You will collect your earnings physically at the restaurant. Admin will track your balance and mark it as paid once handed over.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Change Password */}

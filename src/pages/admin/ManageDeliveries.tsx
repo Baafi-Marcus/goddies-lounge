@@ -3,7 +3,7 @@ import { useRider } from '../../context/RiderContext';
 import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaTimesCircle } from 'react-icons/fa';
 
 const ManageDeliveries: React.FC = () => {
-    const { deliveries, riders } = useRider();
+    const { deliveries, riders, settleCashReceipt, settleRiderPayout } = useRider();
 
     return (
         <div>
@@ -145,10 +145,58 @@ const ManageDeliveries: React.FC = () => {
                                             <p className="text-[10px] text-purple-600 mt-1">On the way</p>
                                         </div>
                                     )}
+
+                                    {/* Settlement Warning Indicators */}
                                     {delivery.status === 'delivered' && (
-                                        <div className="text-center py-3 px-4 bg-green-50 rounded-lg border border-green-200">
-                                            <p className="text-xs text-green-700 font-medium">Completed</p>
-                                            <p className="text-[10px] text-green-600 mt-1">Successfully delivered</p>
+                                        <div className="mt-2 space-y-1">
+                                            {delivery.orderPaymentMethod === 'cash' && !delivery.cashSettledByRider && (
+                                                <div className="bg-red-50 text-red-700 p-1.5 rounded text-[10px] font-bold border border-red-100 animate-pulse">
+                                                    ⚠️ CASH OWED BY RIDER: ₵{delivery.orderTotal.toFixed(2)}
+                                                </div>
+                                            )}
+                                            {!delivery.earningPaidByAdmin && (
+                                                <div className="bg-orange-50 text-orange-700 p-1.5 rounded text-[10px] font-bold border border-orange-100">
+                                                    ⏳ PAYOUT PENDING: ₵{delivery.riderEarning.toFixed(2)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {delivery.status === 'delivered' && (
+                                        <div className="space-y-2">
+                                            <div className="text-center py-3 px-4 bg-green-50 rounded-lg border border-green-200">
+                                                <p className="text-xs text-green-700 font-medium">Completed</p>
+                                                <p className="text-[10px] text-green-600 mt-1">Successfully delivered</p>
+                                            </div>
+
+                                            {/* Settlement Buttons */}
+                                            {delivery.orderPaymentMethod === 'cash' && !delivery.cashSettledByRider && (
+                                                <button
+                                                    onClick={() => settleCashReceipt(delivery.id)}
+                                                    className="w-full py-2 bg-brand-dark text-white rounded-lg text-xs font-bold hover:bg-black transition-all"
+                                                >
+                                                    Confirm Cash Received
+                                                </button>
+                                            )}
+
+                                            {!delivery.earningPaidByAdmin && (
+                                                <button
+                                                    onClick={() => settleRiderPayout(delivery.id)}
+                                                    className="w-full py-2 bg-brand-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all"
+                                                >
+                                                    Confirm Rider Paid
+                                                </button>
+                                            )}
+
+                                            {delivery.earningPaidByAdmin && (
+                                                <div className="bg-green-100 text-green-800 py-1 px-3 rounded-full text-[10px] font-bold text-center">
+                                                    EARNING PAID ✓
+                                                </div>
+                                            )}
+                                            {delivery.orderPaymentMethod === 'cash' && delivery.cashSettledByRider && (
+                                                <div className="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-[10px] font-bold text-center">
+                                                    CASH RECEIVED ✓
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
