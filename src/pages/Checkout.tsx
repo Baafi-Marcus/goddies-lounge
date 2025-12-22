@@ -28,7 +28,7 @@ const schema = yup.object().shape({
         otherwise: (schema) => schema.notRequired(),
     }),
     // Pickup Fields
-    pickupTime: yup.string().required('Scheduled time is required'),
+    pickupTime: yup.string().notRequired(),
 });
 
 interface CheckoutFormValues {
@@ -38,7 +38,7 @@ interface CheckoutFormValues {
     paymentMethod: 'hubtel' | 'cash';
     locationId: string | undefined;
     address: string | undefined;
-    pickupTime: string;
+    pickupTime: string | undefined;
 }
 
 const Checkout: React.FC = () => {
@@ -327,7 +327,7 @@ const Checkout: React.FC = () => {
 
                                     <div className="animate-fade-in">
                                         <label className="block text-sm font-bold text-gray-800 mb-2">
-                                            {orderType === 'delivery' ? 'Schedule Delivery Time' : 'Select Pickup Time'}
+                                            {orderType === 'delivery' ? 'Schedule Delivery Time (Optional)' : 'Select Pickup Time (Optional)'}
                                         </label>
                                         <Controller
                                             control={control}
