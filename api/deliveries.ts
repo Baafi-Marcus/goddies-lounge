@@ -13,18 +13,23 @@ export default async function handler(
 
             if (orderId) {
                 const results = await sql`
-          SELECT 
-           d.*, 
-           d.confirmation_code as "customerConfirmationCode",
-           d.cancellation_reason as "cancellationReason",
-           d.cancelled_at as "cancelledAt",
-           r.vehicle_number, r.vehicle_type,
-           u.full_name as rider_name, u.phone as rider_phone
-          FROM deliveries d
-          LEFT JOIN riders r ON d.rider_id = r.id
-          LEFT JOIN users u ON r.id = u.id
-          WHERE d.order_id = ${orderId as string}
-        `;
+                  SELECT 
+                   d.id, d.order_id as "orderId", d.customer_id as "customerId",
+                   d.pickup_location as "pickupLocation", d.delivery_location as "deliveryLocation",
+                   d.delivery_fee as "deliveryFee", d.commission_rate as "commissionRate",
+                   d.commission_amount as "commissionAmount", d.rider_earning as "riderEarning",
+                   d.status, d.verification_code as "verificationCode", 
+                   d.confirmation_code as "customerConfirmationCode", d.created_at, d.rider_id as "riderId",
+                   d.cancellation_reason as "cancellationReason", d.cancelled_at as "cancelledAt",
+                   r.vehicle_number, r.vehicle_type,
+                   u.full_name as rider_name, u.phone as rider_phone
+                  FROM deliveries d
+                  LEFT JOIN riders r ON d.rider_id = r.id
+                  LEFT JOIN users u ON r.id = u.id
+                  WHERE d.order_id = ${orderId as string}
+                  ORDER BY CASE WHEN d.status != 'cancelled' THEN 0 ELSE 1 END, d.created_at DESC
+                  LIMIT 1
+                `;
                 return response.status(200).json(results[0]);
             }
 
@@ -76,8 +81,17 @@ export default async function handler(
             `;
 
             if (existingDelivery) {
-                // If it's already offered or assigned, don't create a new one
-                return response.status(200).json(existingDelivery);
+                // Return consistent aliased fields
+                return response.status(200).json({
+                    id: existingDelivery.id,
+                    orderId: existingDelivery.order_id,
+                    customerId: existingDelivery.customer_id,
+                    status: existingDelivery.status,
+                    verificationCode: existingDelivery.verification_code,
+                    customerConfirmationCode: existingDelivery.confirmation_code,
+                    riderEarning: existingDelivery.rider_earning,
+                    riderId: existingDelivery.rider_id
+                });
             }
 
             const [newDelivery] = await sql`
@@ -90,7 +104,7 @@ export default async function handler(
                     ${deliveryData.deliveryFee}, ${deliveryData.commissionRate}, ${deliveryData.commissionAmount}, ${deliveryData.riderEarning},
                     'pending', ${deliveryData.verificationCode}, ${deliveryData.confirmationCode}
                 )
-                RETURNING *
+                RETURNING id, order_id as "orderId", status, verification_code as "verificationCode", confirmation_code as "customerConfirmationCode"
             `;
             return response.status(201).json(newDelivery);
         }

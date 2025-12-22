@@ -74,11 +74,10 @@ const OrderTracking: React.FC = () => {
     };
 
     // Scanner Logic - User scans Rider's QR when delivery is in_transit
-
     useEffect(() => {
         const activeDeliveryOrder = activeOrders.find(o =>
             o.delivery_type === 'delivery' &&
-            o.status === 'in_transit' // Only for in_transit, not assigned
+            o.status === 'in_transit'
         );
 
         if (activeDeliveryOrder) {
@@ -97,19 +96,15 @@ const OrderTracking: React.FC = () => {
                         console.log("Scanned Code:", decodedText);
                         scanner.clear();
 
-                        // Handle verification
                         try {
                             await DeliveryService.confirmDeliveryReceipt(activeDeliveryOrder.id, decodedText);
                             alert("Delivery Confirmed! Enjoy your meal.");
-                            fetchOrders(); // Refresh
+                            fetchOrders();
                         } catch (e) {
                             alert("Verification Failed. Please try again.");
                             fetchOrders();
                         }
-
-                    }, () => {
-                        // console.warn(error);
-                    });
+                    }, () => { });
                 } catch (e) {
                     console.error("Scanner init error", e);
                 }
@@ -128,6 +123,7 @@ const OrderTracking: React.FC = () => {
             case 'pending': return 1;
             case 'preparing': return 2;
             case 'ready': return 3;
+            case 'offered':
             case 'assigned': return 3;
             case 'in_transit': return 4;
             case 'delivered': return 5;
@@ -140,6 +136,7 @@ const OrderTracking: React.FC = () => {
             case 'pending': return 'bg-yellow-100 text-yellow-700';
             case 'preparing': return 'bg-blue-100 text-blue-700';
             case 'ready': return 'bg-green-100 text-green-700';
+            case 'offered':
             case 'assigned':
             case 'in_transit': return 'bg-orange-100 text-orange-700';
             case 'delivered': return 'bg-brand-dark text-white';
@@ -281,19 +278,21 @@ const OrderTracking: React.FC = () => {
                                                 ))}
                                             </ul>
 
-                                            {/* QR Scanner for User to Scan Rider's Code */}
+                                            {/* User's Secret Code & Scanner for Rider's Phone */}
                                             {!isHistory && isDelivery && ['in_transit'].includes(order.status) && (
                                                 <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
                                                     <p className="text-xs text-green-800 font-bold uppercase mb-3 text-center">Scan Rider's QR Code to Confirm Delivery</p>
 
                                                     <div id={`reader-${order.id}`} className="w-full mb-3 rounded-lg overflow-hidden border border-green-300"></div>
 
-                                                    <div className="mt-4 bg-white/50 rounded-lg p-3 text-center border border-green-200">
-                                                        <p className="text-[10px] text-green-700 uppercase font-bold mb-1">Backup Delivery Code</p>
-                                                        <p className="text-xl font-mono font-bold text-brand-dark tracking-widest">{order.delivery?.customerConfirmationCode}</p>
+                                                    <div className="mt-4 bg-white/50 rounded-lg p-3 text-center border border-green-200 shadow-sm">
+                                                        <p className="text-[10px] text-green-700 uppercase font-black mb-1">Your Secret Delivery Code</p>
+                                                        <p className="text-2xl font-mono font-bold text-brand-dark tracking-widest">{order.delivery?.customerConfirmationCode}</p>
                                                     </div>
 
-                                                    <p className="text-[10px] text-green-600 text-center mt-3">The rider will show you a QR code when they arrive</p>
+                                                    <p className="text-[10px] text-green-600 text-center mt-3">
+                                                        Scan the rider's QR code OR type your code into their device
+                                                    </p>
                                                 </div>
                                             )}
 

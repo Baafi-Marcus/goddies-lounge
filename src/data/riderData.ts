@@ -24,7 +24,7 @@ export interface Delivery {
     customerPhone: string;
     pickupTime: string | null;
     deliveryTime: string | null;
-    status: 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+    status: 'pending' | 'offered' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
     location: string;
     locationId: string;
     deliveryAddress: string;

@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useRider } from '../../context/RiderContext';
 import { FaMotorcycle, FaMapMarkerAlt, FaPhoneAlt, FaTimesCircle } from 'react-icons/fa';
 
 const ManageDeliveries: React.FC = () => {
     const { deliveries, riders } = useRider();
-    const [selectedDelivery, setSelectedDelivery] = useState<string | null>(null);
-
-    const viewDelivery = deliveries.find(d => d.id === selectedDelivery);
 
     return (
         <div>
@@ -15,9 +12,9 @@ const ManageDeliveries: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                    <p className="text-yellow-600 text-sm font-medium">Pending</p>
+                    <p className="text-yellow-600 text-sm font-medium">Pending/Offered</p>
                     <p className="text-2xl font-bold text-yellow-700">
-                        {deliveries.filter(d => d.status === 'pending').length}
+                        {deliveries.filter(d => ['pending', 'offered'].includes(d.status)).length}
                     </p>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -54,10 +51,11 @@ const ManageDeliveries: React.FC = () => {
                                     <div className="flex items-center gap-4 mb-3">
                                         <span className="font-bold text-lg">Order #{delivery.orderId}</span>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${delivery.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                            delivery.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
-                                                delivery.status === 'in_transit' ? 'bg-purple-100 text-purple-700' :
-                                                    delivery.status === 'picked_up' ? 'bg-indigo-100 text-indigo-700' :
-                                                        'bg-green-100 text-green-700'
+                                            delivery.status === 'offered' ? 'bg-orange-100 text-orange-700' :
+                                                delivery.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
+                                                    delivery.status === 'in_transit' ? 'bg-purple-100 text-purple-700' :
+                                                        delivery.status === 'picked_up' ? 'bg-indigo-100 text-indigo-700' :
+                                                            'bg-green-100 text-green-700'
                                             }`}>
                                             {delivery.status.replace('_', ' ').toUpperCase()}
                                         </span>
@@ -125,10 +123,14 @@ const ManageDeliveries: React.FC = () => {
 
                                 {/* Status Info Only - No Actions */}
                                 <div className="flex flex-col gap-2 min-w-[150px] md:border-l md:pl-6 border-gray-100">
-                                    {delivery.status === 'pending' && (
-                                        <div className="text-center py-3 px-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                            <p className="text-xs text-yellow-700 font-medium">Awaiting Assignment</p>
-                                            <p className="text-[10px] text-yellow-600 mt-1">Assign from Orders page</p>
+                                    {['pending', 'offered'].includes(delivery.status) && (
+                                        <div className={`text-center py-3 px-4 rounded-lg border ${delivery.status === 'offered' ? 'bg-orange-50 border-orange-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                                            <p className={`text-xs font-medium ${delivery.status === 'offered' ? 'text-orange-700' : 'text-yellow-700'}`}>
+                                                {delivery.status === 'offered' ? 'Offer Sent' : 'Awaiting Assignment'}
+                                            </p>
+                                            <p className={`text-[10px] mt-1 ${delivery.status === 'offered' ? 'text-orange-600' : 'text-yellow-600'}`}>
+                                                {delivery.status === 'offered' ? 'Waiting for rider' : 'Assign from Orders page'}
+                                            </p>
                                         </div>
                                     )}
                                     {delivery.status === 'assigned' && (
