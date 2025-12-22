@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRider } from '../../context/RiderContext';
 import { FaQrcode, FaKeyboard, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { parseQRCodeData, isValidCode } from '../../utils/qrCodeGenerator';
 
 const PickupVerification: React.FC = () => {
@@ -68,30 +68,7 @@ const PickupVerification: React.FC = () => {
         }
     };
 
-    // Initialize QR scanner when in QR mode
-    React.useEffect(() => {
-        if (scanMode === 'qr') {
-            const scanner = new Html5QrcodeScanner(
-                'qr-reader',
-                { fps: 10, qrbox: 250 },
-                false
-            );
-
-            scanner.render(
-                (decodedText) => {
-                    handleQRScan(decodedText);
-                    scanner.clear();
-                },
-                (_error) => {
-                    // Ignore scan errors
-                }
-            );
-
-            return () => {
-                scanner.clear().catch(() => { });
-            };
-        }
-    }, [scanMode]);
+    // Scanner Logic - Handled inline in JSX using @yudiel/react-qr-scanner
 
     if (success) {
         return (
@@ -154,9 +131,25 @@ const PickupVerification: React.FC = () => {
                     {scanMode === 'qr' ? (
                         <div>
                             <h2 className="text-xl font-bold mb-4 text-brand-dark">Scan Delivery QR Code</h2>
-                            <div id="qr-reader" className="rounded-lg overflow-hidden"></div>
-                            <p className="text-sm text-gray-500 mt-4 text-center">
-                                Position the QR code within the frame to scan
+                            <div className="rounded-xl overflow-hidden shadow-inner bg-black aspect-square max-w-[400px] mx-auto mb-4 border-2 border-brand-yellow">
+                                <Scanner
+                                    onScan={(result) => {
+                                        if (result && result[0]?.rawValue) {
+                                            handleQRScan(result[0].rawValue);
+                                        }
+                                    }}
+                                    constraints={{ facingMode: 'environment' }}
+                                    styles={{
+                                        container: { width: '100%', height: '100%' }
+                                    }}
+                                    components={{
+                                        audio: false,
+                                        torch: true,
+                                    }}
+                                />
+                            </div>
+                            <p className="text-sm text-gray-500 text-center font-medium">
+                                Point your camera at the restaurant's QR code
                             </p>
                         </div>
                     ) : (

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { OrderService, DeliveryService } from '../../services/neon';
 import { Link } from 'react-router-dom';
 import { FaBoxOpen, FaMotorcycle, FaCheckCircle, FaClock, FaPhone, FaTools, FaHistory, FaShoppingBag, FaExclamationTriangle } from 'react-icons/fa';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 interface Order {
     id: string;
@@ -75,52 +75,7 @@ const OrderTracking: React.FC = () => {
         }
     };
 
-    // Scanner Logic - User scans Rider's QR when delivery is in_transit
-    useEffect(() => {
-        const activeDeliveryOrder = activeOrders.find(o =>
-            o.delivery_type === 'delivery' &&
-            o.status === 'in_transit'
-        );
-
-        if (activeDeliveryOrder) {
-            let scanner: any;
-            const elementId = `reader-${activeDeliveryOrder.id}`;
-            const element = document.getElementById(elementId);
-
-            if (element) {
-                try {
-                    scanner = new Html5QrcodeScanner(
-                        elementId,
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                            aspectRatio: 1.0,
-                            // videoConstraints: { facingMode: "environment" } // Usually handled by preference in render
-                        },
-                        /* verbose= */ false
-                    );
-                    scanner.render(async (decodedText: string) => {
-                        console.log("Scanned Code:", decodedText);
-
-                        if (decodedText === activeDeliveryOrder.delivery?.customerConfirmationCode) {
-                            setScannedMatch(decodedText);
-                            scanner.clear();
-                        } else {
-                            alert("Code Mismatch! Please scan the rider's correct QR code.");
-                        }
-                    }, () => { });
-                } catch (e) {
-                    console.error("Scanner init error", e);
-                }
-            }
-
-            return () => {
-                if (scanner) {
-                    scanner.clear().catch((e: any) => console.error(e));
-                }
-            };
-        }
-    }, [activeOrders]);
+    // Scanner Logic - Handled inline in JSX using @yudiel/react-qr-scanner
 
     const getStatusStep = (status: string) => {
         switch (status.toLowerCase()) {
@@ -287,12 +242,38 @@ const OrderTracking: React.FC = () => {
                                                 <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
                                                     <p className="text-xs text-green-800 font-bold uppercase mb-3 text-center">Scan Rider's QR Code to Confirm Delivery</p>
 
-                                                    <div id={`reader-${order.id}`} className={`w-full mb-3 rounded-lg overflow-hidden border border-green-300 ${scannedMatch ? 'hidden' : 'block'}`}></div>
+                                                    {!scannedMatch ? (
+                                                        <div className="w-full mb-3 rounded-lg overflow-hidden border border-green-300 bg-black aspect-square max-w-[300px] mx-auto">
+                                                            <Scanner
+                                                                onScan={(result) => {
+                                                                    if (result && result[0]?.rawValue) {
+                                                                        const decodedText = result[0].rawValue;
+                                                                        console.log("Scanned Code:", decodedText);
+                                                                        if (decodedText === order.delivery?.customerConfirmationCode) {
+                                                                            setScannedMatch(decodedText);
+                                                                        } else {
+                                                                            alert("Code Mismatch! Please scan the rider's correct QR code.");
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                constraints={{ facingMode: 'environment' }}
+                                                                styles={{
+                                                                    container: { width: '100%', height: '100%' }
+                                                                }}
+                                                                components={{
+                                                                    audio: false,
+                                                                    torch: true,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mb-4 bg-white p-6 rounded-xl border-2 border-green-500 text-center animate-fade-in">
+                                                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                <FaCheckCircle className="text-green-500 text-3xl" />
+                                                            </div>
+                                                            <h3 className="text-lg font-bold text-gray-800">Scan Successful!</h3>
+                                                            <p className="text-sm text-gray-500 mb-4">Rider verified. Click below to confirm receipt.</p>
 
-                                                    {scannedMatch && (
-                                                        <div className="mb-4 bg-white p-4 rounded-xl border-2 border-green-500 text-center animate-bounce">
-                                                            <FaCheckCircle className="text-green-500 text-3xl mx-auto mb-2" />
-                                                            <p className="text-sm font-bold text-green-700">Scan Successful!</p>
                                                             <button
                                                                 onClick={async () => {
                                                                     setIsConfirming(true);
@@ -308,15 +289,16 @@ const OrderTracking: React.FC = () => {
                                                                     }
                                                                 }}
                                                                 disabled={isConfirming}
-                                                                className="mt-3 w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                                                                className="w-full bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
                                                             >
-                                                                {isConfirming ? 'Confirming...' : 'Complete & Confirm Receipt'}
+                                                                {isConfirming ? 'Confirming...' : 'CONFIRM RECEIPT'}
                                                             </button>
+
                                                             <button
                                                                 onClick={() => setScannedMatch(null)}
-                                                                className="mt-2 text-xs text-gray-500 underline"
+                                                                className="mt-4 text-xs text-gray-400 hover:text-gray-600 font-medium underline"
                                                             >
-                                                                Rescan
+                                                                Try scanning again
                                                             </button>
                                                         </div>
                                                     )}
