@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://goddieslounge.com/sitemap.xml
+Sitemap: https://goddies-lounge.vercel.app/sitemap.xml

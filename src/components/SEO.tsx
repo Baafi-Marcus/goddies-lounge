@@ -14,7 +14,7 @@ const SEO: React.FC<SEOProps> = ({
     description,
     keywords,
     image = '/og-image.jpg',
-    url = 'https://goddieslounge.com'
+    url = 'https://goddies-lounge.vercel.app'
 }) => {
     const siteTitle = 'Goddies Lounge and Wine Bar';
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
