@@ -13,9 +13,9 @@ const Home: React.FC = () => {
     const restaurantSchema = {
         "@context": "https://schema.org",
         "@type": "Restaurant",
-        "name": "Goodies Lounge and Wine Bar",
-        "image": "https://goodieslounge.com/logo.jpg",
-        "url": "https://goodieslounge.com",
+        "name": "Goddies Lounge and Wine Bar",
+        "image": "https://goddieslounge.com/logo.jpg",
+        "url": "https://goddieslounge.com",
         "telephone": "+233555000000",
         "address": {
             "@type": "PostalAddress",
@@ -46,19 +46,19 @@ const Home: React.FC = () => {
                 "closes": "23:00"
             }
         ],
-        "menu": "https://goodieslounge.com/user/menu",
+        "menu": "https://goddieslounge.com/user/menu",
         "servesCuisine": [
             "Ghanaian",
             "Continental",
             "African"
         ],
         "priceRange": "GH₵₵",
-        "hasMenu": "https://goodieslounge.com/user/menu",
+        "hasMenu": "https://goddieslounge.com/user/menu",
         "potentialAction": {
             "@type": "OrderAction",
             "target": {
                 "@type": "EntryPoint",
-                "urlTemplate": "https://goodieslounge.com/user/menu",
+                "urlTemplate": "https://goddieslounge.com/user/menu",
                 "inLanguage": "en-US",
                 "actionPlatform": [
                     "http://schema.org/DesktopWebPlatform",
@@ -105,7 +105,7 @@ const Home: React.FC = () => {
         <div className="animate-fade-in font-sans">
             <SEO
                 title="Home"
-                description="Experience the finest local and continental dishes at Goodies Lounge and Wine Bar in Asafo Akim. Premium food, drinks, and atmosphere."
+                description="Experience the finest local and continental dishes at Goddies Lounge and Wine Bar in Asafo Akim. Premium food, drinks, and atmosphere."
                 keywords="restaurant, lounge, wine bar, Asafo Akim, food delivery, cocktails, Ghanaian cuisine"
             />
             <StructuredData data={restaurantSchema} />

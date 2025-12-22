@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -78,7 +78,7 @@ const Reservations: React.FC = () => {
         }
     };
 
-    const onSubmit: import('react-hook-form').SubmitHandler<ReservationFormValues> = async (data) => {
+    const onSubmit: SubmitHandler<ReservationFormValues> = async (data) => {
         try {
             await ReservationService.createReservation({
                 ...data,
@@ -193,8 +193,8 @@ const Reservations: React.FC = () => {
         <div className="min-h-screen bg-gray-50 py-12 animate-fade-in">
             <SEO
                 title="Book a Table"
-                description="Make a reservation at Goodies Lounge & Wine Bar. Select your favorite table from our floor plan and enjoy a premium dining experience."
-                keywords="reservation, book table, dining, lounge reservation, table booking"
+                description="Make a reservation at Goddies Lounge & Wine Bar. Select your favorite table from our floor plan and enjoy a premium dining experience."
+                keywords="reservation, book table, dining, lounge reservation, table booking, goddies lounge"
             />
             <div className="container mx-auto px-4">
                 <div className="text-center mb-8">

@@ -162,7 +162,7 @@ const RiderDeliveries: React.FC = () => {
                                     <div className="flex justify-between items-start mb-4 mt-2">
                                         <div>
                                             <p className="text-xs text-gray-400 font-bold uppercase">Pickup</p>
-                                            <p className="font-bold text-gray-800 text-sm">{delivery.pickupLocation || delivery.pickup_location}</p>
+                                            <p className="font-bold text-gray-800 text-sm">{delivery.pickupLocation || delivery.pickup_location || 'Goddies Lounge & wine bar, Akim Asafo'}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs text-gray-400 font-bold uppercase">You Earn</p>
@@ -213,7 +213,7 @@ const RiderDeliveries: React.FC = () => {
                                     <div className="space-y-3 mb-6">
                                         <div>
                                             <p className="text-[10px] text-gray-400 uppercase font-bold">Pickup</p>
-                                            <p className="text-sm font-medium text-gray-800">{delivery.pickupLocation || delivery.pickup_location}</p>
+                                            <p className="text-sm font-medium text-gray-800">{delivery.pickupLocation || delivery.pickup_location || 'Goddies Lounge & wine bar, Akim Asafo'}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-gray-400 uppercase font-bold">Dropoff</p>

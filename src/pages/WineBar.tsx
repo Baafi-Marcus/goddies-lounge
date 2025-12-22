@@ -81,7 +81,7 @@ const WineBar: React.FC = () => {
         <div className="animate-fade-in">
             <SEO
                 title="The Wine Bar"
-                description="Explore our curated selection of premium wines, spirits, and cocktails at Goodies Lounge. Perfect for evening relaxation."
+                description="Explore our curated selection of premium wines, spirits, and cocktails at Goddies Lounge. Perfect for evening relaxation."
                 keywords="wine bar, spirits, cocktails, night life, Asafo Akim, premium drinks"
             />
             <div className="text-center mb-12">

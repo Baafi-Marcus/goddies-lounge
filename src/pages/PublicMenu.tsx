@@ -10,7 +10,7 @@ const PublicMenu: React.FC = () => {
         <div className="bg-white">
             <SEO
                 title="Signature Selection"
-                description="Experience culinary excellence at Goodies Lounge. Explore our signature Jollof, gourmet shawarma, and curated wine list."
+                description="Experience culinary excellence at Goddies Lounge. Explore our signature Jollof, gourmet shawarma, and curated wine list."
                 keywords="culinary excellence, signature dishes, Kwame Mensah, gourmet food, fine dining"
             />
             {/* Hero Section */}

@@ -161,9 +161,16 @@ const ActiveDelivery: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <FaMapMarkerAlt className="text-brand-yellow mt-1" />
+                            <FaMapMarkerAlt className="text-blue-500 mt-1" />
                             <div>
-                                <p className="text-sm text-gray-600">Delivery Address</p>
+                                <p className="text-[10px] text-gray-400 uppercase font-black">Pickup From</p>
+                                <p className="font-bold text-brand-dark">{delivery.pickupLocation || 'Goddies Lounge & wine bar, Akim Asafo'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <FaMapMarkerAlt className="text-brand-red mt-1" />
+                            <div>
+                                <p className="text-[10px] text-gray-400 uppercase font-black">Deliver To (Customer)</p>
                                 <p className="font-bold text-brand-dark">{delivery.location}</p>
                                 <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
                             </div>

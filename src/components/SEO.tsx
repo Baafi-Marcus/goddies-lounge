@@ -14,9 +14,9 @@ const SEO: React.FC<SEOProps> = ({
     description,
     keywords,
     image = '/og-image.jpg',
-    url = 'https://goodieslounge.com'
+    url = 'https://goddieslounge.com'
 }) => {
-    const siteTitle = 'Goodies Lounge and Wine Bar';
+    const siteTitle = 'Goddies Lounge and Wine Bar';
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
     const defaultDesc = 'Premium lounge and wine bar in Asafo Akim. Experience the best food, drinks, and atmosphere.';
 

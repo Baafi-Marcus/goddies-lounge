@@ -62,9 +62,21 @@ const ManageDeliveries: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
-                                        <div className="flex items-center gap-2">
-                                            <FaMapMarkerAlt className="text-brand-red" />
+                                        <div className="flex items-start gap-2">
+                                            <div className="bg-blue-50 p-2 rounded-lg">
+                                                <FaMapMarkerAlt className="text-blue-500" />
+                                            </div>
                                             <div>
+                                                <p className="text-[10px] text-gray-500 uppercase font-black">Pickup</p>
+                                                <p className="font-bold text-brand-dark">{delivery.pickupLocation || 'Goddies Lounge & wine bar, Akim Asafo'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <div className="bg-red-50 p-2 rounded-lg">
+                                                <FaMapMarkerAlt className="text-brand-red" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500 uppercase font-black">Dropoff (Customer)</p>
                                                 <p className="font-medium text-brand-dark">{delivery.location}</p>
                                                 <p className="text-xs">{delivery.deliveryAddress}</p>
                                             </div>

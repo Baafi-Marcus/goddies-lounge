@@ -1,6 +1,6 @@
 # Hubtel Integration Guide
 
-This document describes how we will use **Hubtel Ghana** for SMS notifications and Payment processing in the Goodies Lounge application.
+This document describes how we will use **Hubtel Ghana** for SMS notifications and Payment processing in the Goddies Lounge application.
 
 ## 1. SMS Notifications
 We will use the **Hubtel Unity SMS API** to send automated messages for the following events:
@@ -34,7 +34,7 @@ Add these to your `.env` file once you have your Hubtel credentials:
 VITE_HUBTEL_CLIENT_ID=your_client_id
 VITE_HUBTEL_CLIENT_SECRET=your_client_secret
 VITE_HUBTEL_MERCHANT_ID=your_merchant_id
-VITE_HUBTEL_SENDER_ID=GoodiesLounge
+VITE_HUBTEL_SENDER_ID=GoddiesLounge
 ```
 
 ## 4. Implementation Steps

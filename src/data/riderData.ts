@@ -38,6 +38,8 @@ export interface Delivery {
     customerConfirmationCode: string;
     orderTotal: number;
     orderItems: string;
+    pickupLocation?: string;
+    deliveryLocation?: string;
     cashSettledByRider?: boolean;
     earningPaidByAdmin?: boolean;
     orderPaymentMethod?: string;

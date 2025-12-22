@@ -57,7 +57,7 @@ const Login: React.FC = () => {
     const formatUsernameToEmail = (username: string) => {
         // If it looks like an email, leave it. If not, append domain.
         if (username.includes('@')) return username;
-        return `${username.toLowerCase().replace(/\s+/g, '')} @goodies.app`;
+        return `${username.toLowerCase().replace(/\s+/g, '')}@goddies.app`;
     };
 
     const handleGoogleLogin = async () => {
@@ -227,8 +227,8 @@ const Login: React.FC = () => {
 
                 {/* Header Section */}
                 <div className="p-8 text-center border-b border-white/10">
-                    <img src={logo} alt="Goodies Lounge" className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-white/20 shadow-lg object-cover" />
-                    <h1 className="text-2xl font-bold text-white mb-1">Goodies Lounge</h1>
+                    <img src={logo} alt="Goddies Lounge" className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-white/20 shadow-lg object-cover" />
+                    <h1 className="text-2xl font-bold text-white mb-1">Goddies Lounge</h1>
                     <p className="text-gray-300 text-xs uppercase tracking-widest">Premium Experience</p>
                 </div>
 

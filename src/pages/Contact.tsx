@@ -7,7 +7,7 @@ const Contact: React.FC = () => {
         <div className="bg-gray-50 min-h-screen py-12 animate-fade-in">
             <SEO
                 title="Contact Us"
-                description="Get in touch with Goodies Lounge & Wine Bar. Call us at 0303980021 or 0545022181, or visit us at Akyem Asafo."
+                description="Get in touch with Goddies Lounge & Wine Bar. Call us at 0303980021 or 0545022181, or visit us at Akyem Asafo."
                 keywords="contact restaurant, phone number, address, location, Akyem Asafo, customer support"
             />
             <div className="container mx-auto px-4">

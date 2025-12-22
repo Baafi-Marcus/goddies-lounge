@@ -131,7 +131,7 @@ const ManageOrders: React.FC = () => {
             const deliveryData = {
                 orderId: order.id,
                 customerId: order.user_id,
-                pickupLocation: 'Goodies Lounge, Accra',
+                pickupLocation: 'Goddies Lounge & wine bar, Akim Asafo',
                 deliveryLocation: order.delivery_address || 'Unknown Address',
                 deliveryFee: deliveryFee,
                 commissionRate: commissionRate,

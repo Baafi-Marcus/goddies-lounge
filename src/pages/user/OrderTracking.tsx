@@ -240,6 +240,31 @@ const OrderTracking: React.FC = () => {
                                                 ))}
                                             </ul>
 
+                                            {/* Delivery/Pickup Details */}
+                                            <div className="mt-8 space-y-4">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-1">
+                                                        <FaMapMarkerAlt className="text-blue-500 text-xs" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-gray-400 uppercase font-black">Pickup From</p>
+                                                        <p className="font-bold text-gray-800">{order.delivery?.pickupLocation || 'Goddies Lounge & wine bar, Akim Asafo'}</p>
+                                                    </div>
+                                                </div>
+
+                                                {isDelivery && (
+                                                    <div className="flex items-start gap-4 animate-fade-in">
+                                                        <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 mt-1">
+                                                            <FaMapMarkerAlt className="text-brand-red text-xs" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-400 uppercase font-black">Deliver To</p>
+                                                            <p className="font-bold text-gray-800">{order.delivery?.deliveryLocation || 'Customer Location'}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             {!isHistory && !isDelivery && order.status === 'ready' && (
                                                 <div className="mt-6 p-6 bg-brand-yellow/10 rounded-2xl border-2 border-brand-yellow/30 text-center">
                                                     <FaBoxOpen className="text-4xl text-brand-yellow mx-auto mb-3" />

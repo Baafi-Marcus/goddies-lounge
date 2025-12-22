@@ -169,7 +169,7 @@ const Checkout: React.FC = () => {
                 deliveryType: data.orderType,
                 deliveryAddress: data.orderType === 'delivery'
                     ? `${locations.find(l => l.id === data.locationId)?.name || ''} - ${data.address}`
-                    : `Goodies Lounge & Wine Bar, Asafo Akim`,
+                    : `Goddies Lounge & wine bar, Akim Asafo`,
                 paymentMethod: data.paymentMethod,
                 pickupTime: data.pickupTime
             };
