@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goddies Lounge - Project Handover</title>
+    <style>
+        :root {
+            --brand-red: #D42027;
+            --brand-yellow: #FFB800;
+            --brand-dark: #1A1A1A;
+            --gray-light: #F4F4F4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #fff;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid var(--brand-red);
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--brand-dark);
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            color: var(--brand-red);
+            margin-top: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: var(--brand-dark);
+            color: white;
+            text-align: left;
+            padding: 12px;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--gray-light);
+        }
+
+        .alert {
+            background-color: #FFF9E6;
+            border-left: 5px solid var(--brand-yellow);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            color: #856404;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 0.8em;
+            color: #888;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Goddies Lounge & Wine Bar</h1>
+        <div class="subtitle">Project Handover & Operational Summary</div>
+    </div>
+
+    <p>This document provides a technical and operational overview of the <strong>Goddies Lounge Management
+            System</strong>, including a breakdown of necessary infrastructure for long-term production use.</p>
+
+    <h2>1. Technical Architecture</h2>
+    <p>The application is a modern, high-performance web platform built with a dedicated frontend, serverless API layer,
+        and real-time database capabilities.</p>
+    <ul>
+        <li><strong>Frontend</strong>: React.js with Vite and Tailwind CSS.</li>
+        <li><strong>Backend</strong>: Vercel Serverless Functions (Node.js).</li>
+        <li><strong>Database</strong>: Neon PostgreSQL (Primary Data).</li>
+        <li><strong>Real-time</strong>: Firebase Realtime Database (Rider Tracking).</li>
+        <li><strong>Auth</strong>: Firebase Multi-channel (Google, Phone OTP, Username).</li>
+    </ul>
+
+    <h2>2. Infrastructure & Operating Costs (Buyer's Responsibility)</h2>
+    <p>The following services are essential for the production environment. <strong>All recurring billing and setup fees
+            are to be covered by the Buyer.</strong></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Purpose</th>
+                <th>Estimated Cost (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Firebase (Blaze)</strong></td>
+                <td>SMS OTP & Rider Locations</td>
+                <td><strong>$0.00</strong> (10k SMS free/mo)</td>
+            </tr>
+            <tr>
+                <td><strong>Cloudflare</strong></td>
+                <td>Domain Registration (.com/.app)</td>
+                <td><strong>~$12.00</strong> /year</td>
+            </tr>
+            <tr>
+                <td><strong>Neon Database</strong></td>
+                <td>PostgreSQL Data Storage</td>
+                <td><strong>$0.00 to $19.00</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Hubtel</strong></td>
+                <td>Payment Processing & Alerts</td>
+                <td><strong>Prepaid SMS Credits</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Vercel</strong></td>
+                <td>Hosting & API Deployment</td>
+                <td><strong>$0.00</strong> (Hobby Tier)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="alert">
+        <span class="alert-title">NOTE FOR BUYER</span>
+        <p>Before launching to the public, the Buyer must upgrade the Firebase project to the <strong>Blaze
+                Plan</strong> (requires adding a credit card) and purchase the final domain name on Cloudflare.</p>
+    </div>
+
+    <h2>3. Developer Service Fees & Maintenance</h2>
+    <p>The following fees represent the professional services for the development, deployment, and ongoing technical
+        support of the platform.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Cost (GHS)</th>
+                <th>Terms</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Project Development Fee</strong></td>
+                <td><strong>₵1,500 - ₵2,000</strong></td>
+                <td>One-time payment for custom development.</td>
+            </tr>
+            <tr>
+                <td><strong>Annual Maintenance Fee</strong></td>
+                <td><strong>₵300 - ₵500</strong></td>
+                <td>Starts after Year 1 (Year 1 is <strong>FREE</strong>).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="alert" style="background-color: #f8f9fa; border-left-color: var(--brand-dark);">
+        <span class="alert-title">RATIONALE FOR FEES</span>
+        <ul>
+            <li><strong>Custom Logic</strong>: This is a tailored logistics solution built specifically for your brand,
+                not a generic template.</li>
+            <li><strong>Advanced Engineering</strong>: Secure Phone OTP verification and real-time rider GPS tracking
+                are high-value technical assets.</li>
+            <li><strong>Long-term Value</strong>: Owning this software eliminates monthly commissions paid to
+                third-party delivery apps.</li>
+            <li><strong>Support</strong>: The annual fee ensures your system remains optimized for the latest phone
+                browsers and security standards.</li>
+        </ul>
+    </div>
+
+    <h2>4. Application Features</h2>
+    <ul>
+        <li><strong>Customer Experience</strong>: Full digital menu, reservation booking, and real-time delivery
+            tracking with map integration.</li>
+        <li><strong>Business Management</strong>: Comprehensive Admin Dashboard for inventory, sales tracking, and staff
+            coordination.</li>
+        <li><strong>Rider Fleet</strong>: Dedicated mobile-optimized interface for delivery riders with verification
+            security.</li>
+    </ul>
+
+    <div class="footer">
+        Generated on December 23, 2024. All systems verified and deployed.
+    </div>
+
+    <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <button onclick="window.print()"
+            style="padding: 10px 20px; background: var(--brand-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            Save as PDF / Print
+        </button>
+    </div>
+</body>
+
+</html>
