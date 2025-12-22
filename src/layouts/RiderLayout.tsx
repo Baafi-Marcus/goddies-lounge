@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FaHome, FaMotorcycle, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaMotorcycle, FaUser, FaSignOutAlt } from 'react-icons/fa';
 import { useRider } from '../context/RiderContext';
 import { useNavigate } from 'react-router-dom';
 import MobileRiderNav from '../components/MobileRiderNav';
@@ -12,7 +12,6 @@ const RiderLayout: React.FC = () => {
     const { currentRider, logout } = useRider();
 
     const riderLinks = [
-        { name: 'Dashboard', path: '/rider/dashboard', icon: <FaHome /> },
         { name: 'Deliveries', path: '/rider/deliveries', icon: <FaMotorcycle /> },
         { name: 'Profile', path: '/rider/profile', icon: <FaUser /> },
     ];
@@ -44,8 +43,8 @@ const RiderLayout: React.FC = () => {
                                 key={link.name}
                                 to={link.path}
                                 className={`flex items-center gap-2 font-medium transition-colors duration-300 ${isActive(link.path)
-                                        ? 'text-brand-red font-bold'
-                                        : 'text-gray-600 hover:text-brand-red'
+                                    ? 'text-brand-red font-bold'
+                                    : 'text-gray-600 hover:text-brand-red'
                                     }`}
                             >
                                 {link.icon}

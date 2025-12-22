@@ -1,15 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRider } from '../../context/RiderContext';
 import { FaMotorcycle, FaBox, FaMoneyBillWave, FaCheckCircle, FaClock } from 'react-icons/fa';
 
 const RiderDashboard: React.FC = () => {
-    const { currentRider, deliveries, activeDelivery } = useRider();
+    const { currentRider } = useRider();
+    const navigate = useNavigate();
 
     React.useEffect(() => {
-        if (!currentRider) {
-            // Redirect handled by RiderLayout
-        }
-    }, [currentRider]);
+        // Redirect to the new 3-tab delivery view which is more optimized
+        navigate('/rider/deliveries', { replace: true });
+    }, [navigate]);
 
     if (!currentRider) return null;
 

@@ -140,8 +140,7 @@ const ManageOrders: React.FC = () => {
                 confirmationCode: generateCustomerConfirmationCode()
             };
 
-            const createdDeliveries = await DeliveryService.createDelivery(deliveryData);
-            const newDelivery = createdDeliveries[0];
+            const newDelivery = await DeliveryService.createDelivery(deliveryData);
 
             if (newDelivery && newDelivery.id) {
                 await DeliveryService.assignRider(newDelivery.id, riderId);
@@ -314,9 +313,11 @@ const ManageOrders: React.FC = () => {
                                         {order.status === 'ready' && order.delivery_type === 'delivery' && (
                                             <button
                                                 onClick={() => setAssignModalOpen(order.id)}
-                                                className="w-full py-2 bg-brand-dark text-white rounded-lg font-bold text-sm hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-dark/20"
+                                                disabled={isAssigning}
+                                                className={`w-full py-2 bg-brand-dark text-white rounded-lg font-bold text-sm hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-dark/20 ${isAssigning ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
-                                                <FaMotorcycle /> Assign Rider
+                                                {isAssigning ? <FaSpinner className="animate-spin" /> : <FaMotorcycle />}
+                                                {isAssigning ? 'Processing...' : 'Assign Rider'}
                                             </button>
                                         )}
 

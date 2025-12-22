@@ -67,8 +67,21 @@ export default async function handler(
 
         if (method === 'POST') {
             const deliveryData = request.body;
+
+            // Check if a delivery already exists for this order
+            const [existingDelivery] = await sql`
+                SELECT * FROM deliveries 
+                WHERE order_id = ${deliveryData.orderId} 
+                AND status NOT IN ('delivered', 'cancelled')
+            `;
+
+            if (existingDelivery) {
+                // If it's already offered or assigned, don't create a new one
+                return response.status(200).json(existingDelivery);
+            }
+
             const [newDelivery] = await sql`
-        INSERT INTO deliveries(
+                INSERT INTO deliveries(
                     order_id, customer_id, pickup_location, delivery_location,
                     delivery_fee, commission_rate, commission_amount, rider_earning,
                     status, verification_code, confirmation_code
@@ -77,8 +90,8 @@ export default async function handler(
                     ${deliveryData.deliveryFee}, ${deliveryData.commissionRate}, ${deliveryData.commissionAmount}, ${deliveryData.riderEarning},
                     'pending', ${deliveryData.verificationCode}, ${deliveryData.confirmationCode}
                 )
-            RETURNING *
-                `;
+                RETURNING *
+            `;
             return response.status(201).json(newDelivery);
         }
 

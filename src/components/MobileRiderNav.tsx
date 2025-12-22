@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaHome, FaMotorcycle, FaCog, FaUser } from 'react-icons/fa';
+import { FaMotorcycle, FaUser } from 'react-icons/fa';
 
 interface NavItem {
     name: string;
@@ -18,7 +18,6 @@ const MobileRiderNav: React.FC = () => {
     }, []);
 
     const navItems: NavItem[] = [
-        { name: 'Dashboard', path: '/rider/dashboard', icon: <FaHome size={24} /> },
         { name: 'Deliveries', path: '/rider/deliveries', icon: <FaMotorcycle size={24} /> },
         { name: 'Profile', path: '/rider/profile', icon: <FaUser size={22} /> },
     ];
