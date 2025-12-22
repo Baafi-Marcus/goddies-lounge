@@ -19,8 +19,8 @@ const Home: React.FC = () => {
         "telephone": "+233555000000",
         "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Asafo Akim",
-            "addressLocality": "Kibi",
+            "streetAddress": "24th Goddies Street",
+            "addressLocality": "Akyem Asafo",
             "addressRegion": "Eastern Region",
             "postalCode": "00233",
             "addressCountry": "GH"

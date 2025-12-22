@@ -12,6 +12,7 @@ interface Order {
     created_at: string;
     items: any;
     delivery_type: 'delivery' | 'pickup';
+    delivery_address?: string;
     delivery?: any;
     pickup_time?: string;
 }
@@ -259,7 +260,9 @@ const OrderTracking: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-[10px] text-gray-400 uppercase font-black">Deliver To</p>
-                                                            <p className="font-bold text-gray-800">{order.delivery?.deliveryLocation || 'Customer Location'}</p>
+                                                            <p className="font-bold text-gray-800">
+                                                                {order.delivery?.deliveryLocation || order.delivery_address || 'Customer Location'}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 )}

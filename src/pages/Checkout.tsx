@@ -74,7 +74,7 @@ const Checkout: React.FC = () => {
         }
     }, [cart, currentUser, loading, navigate]);
 
-    const { register, handleSubmit, control, setValue, trigger, formState: { errors } } = useForm<CheckoutFormValues>({
+    const { register, handleSubmit, control, setValue, trigger, watch, formState: { errors } } = useForm<CheckoutFormValues>({
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
@@ -329,16 +329,26 @@ const Checkout: React.FC = () => {
                                         <label className="block text-sm font-bold text-gray-800 mb-2">
                                             {orderType === 'delivery' ? 'Schedule Delivery Time (Optional)' : 'Select Pickup Time (Optional)'}
                                         </label>
+                                        <div className="flex gap-4 mb-4">
+                                            <label className={`flex-1 flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all ${!watch('pickupTime') ? 'border-brand-red bg-red-50 text-brand-red' : 'border-gray-100 hover:border-gray-200'}`}>
+                                                <input type="radio" className="hidden" onClick={() => setValue('pickupTime', '')} />
+                                                <span className="font-bold text-sm">Deliver ASAP</span>
+                                            </label>
+                                            <div className="flex-1"></div> {/* Placeholder to balance */}
+                                        </div>
+
                                         <Controller
                                             control={control}
                                             name="pickupTime"
                                             render={({ field: { onChange, value } }) => (
-                                                <ScrollTimePicker
-                                                    value={value || ''}
-                                                    onChange={onChange}
-                                                    startTime="10:00"
-                                                    endTime="22:00"
-                                                />
+                                                <div className={!value ? 'opacity-40 grayscale pointer-events-none' : ''}>
+                                                    <ScrollTimePicker
+                                                        value={value || ''}
+                                                        onChange={onChange}
+                                                        startTime="10:00"
+                                                        endTime="22:00"
+                                                    />
+                                                </div>
                                             )}
                                         />
                                         <p className="text-red-500 text-xs mt-2 pl-1 font-medium">{errors.pickupTime?.message}</p>
