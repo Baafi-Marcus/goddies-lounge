@@ -264,7 +264,7 @@ const Menu: React.FC = () => {
                                                     <div className="flex flex-col justify-center">
                                                         <h4 className="font-bold text-lg text-brand-dark mb-1 group-hover:text-brand-dark transition-colors">{item.name}</h4>
                                                         <p className="text-gray-500 text-sm line-clamp-2 mb-2 leading-tight">{item.description}</p>
-                                                        <span className={`font-bold ${activeTab === 'wine' ? 'text-brand-dark' : 'text-brand-red'}`}>₵{item.price.toFixed(2)}</span>
+                                                        <span className={`font-bold ${activeTab === 'wine' ? 'text-brand-dark' : 'text-brand-red'}`}>₵{Number(item.price).toFixed(2)}</span>
                                                     </div>
                                                 </div>
                                             ))}

@@ -236,7 +236,7 @@ const OrderTracking: React.FC = () => {
                                                             <p className="font-medium text-gray-800">{item.name}</p>
                                                             <p className="text-gray-500 text-xs">Qty: {item.quantity}</p>
                                                         </div>
-                                                        <span className="font-medium text-gray-600">₵{(item.price * item.quantity).toFixed(2)}</span>
+                                                        <span className="font-medium text-gray-600">₵{Number(item.price * item.quantity).toFixed(2)}</span>
                                                     </li>
                                                 ))}
                                             </ul>

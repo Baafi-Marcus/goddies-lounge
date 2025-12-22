@@ -110,7 +110,7 @@ const CustomersList: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="p-4 font-medium">{customer.ordersCount}</td>
-                                        <td className="p-4 font-bold text-green-600">₵{customer.totalSpent.toFixed(2)}</td>
+                                        <td className="p-4 font-bold text-green-600">₵{Number(customer.totalSpent).toFixed(2)}</td>
                                         <td className="p-4">
                                             <button
                                                 onClick={() => handleViewHistory(customer)}
@@ -160,8 +160,8 @@ const CustomersList: React.FC = () => {
                                                         #{order.id.slice(0, 8)}
                                                     </span>
                                                     <span className={`ml-2 text-xs font-bold uppercase px-2 py-1 rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                                            order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                                'bg-yellow-100 text-yellow-700'
+                                                        order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                            'bg-yellow-100 text-yellow-700'
                                                         }`}>
                                                         {order.status}
                                                     </span>

@@ -204,7 +204,7 @@ const WineBar: React.FC = () => {
                                                     <div>
                                                         <h4 className="font-bold text-lg text-brand-dark mb-1">{item.name}</h4>
                                                         <p className="text-gray-500 text-sm line-clamp-2 mb-2 italic">{item.description}</p>
-                                                        <span className="font-bold text-brand-red">₵{item.price.toFixed(2)}</span>
+                                                        <span className="font-bold text-brand-red">₵{Number(item.price).toFixed(2)}</span>
                                                     </div>
                                                 </div>
                                             ))}

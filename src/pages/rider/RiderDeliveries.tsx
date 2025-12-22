@@ -105,7 +105,7 @@ const RiderDeliveries: React.FC = () => {
                     <div className="relative z-10 flex justify-between items-end">
                         <div className="space-y-1">
                             <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Total Earnings</p>
-                            <p className="text-4xl font-black">₵{totalEarnings.toFixed(2)}</p>
+                            <p className="text-4xl font-black">₵{Number(totalEarnings).toFixed(2)}</p>
                         </div>
                         <div className="text-right">
                             <div className="bg-white/10 px-3 py-2 rounded-2xl backdrop-blur-md inline-block">

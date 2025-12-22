@@ -464,7 +464,7 @@ const Checkout: React.FC = () => {
                                     disabled={submitting}
                                     className="px-8 py-3 rounded-xl font-bold bg-brand-red text-white hover:bg-red-700 transition-all shadow-lg hover:shadow-brand-red/40 flex items-center gap-2 transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    {submitting ? 'Processing Order...' : `Complete Order • ₵${totalAmount.toFixed(2)}`}
+                                    {submitting ? 'Processing Order...' : `Complete Order • ₵${Number(totalAmount).toFixed(2)}`}
                                 </button>
                             )}
                         </div>
@@ -485,10 +485,10 @@ const Checkout: React.FC = () => {
                                         </div>
                                         <div className="flex-grow">
                                             <p className="font-medium text-gray-800 line-clamp-1">{item.name}</p>
-                                            <p className="text-xs text-gray-500">₵{item.price.toFixed(2)} x {item.quantity}</p>
+                                            <p className="text-xs text-gray-500">₵{Number(item.price).toFixed(2)} x {item.quantity}</p>
                                         </div>
                                         <div className="font-bold text-gray-800">
-                                            ₵{(item.price * item.quantity).toFixed(2)}
+                                            ₵{Number(item.price * item.quantity).toFixed(2)}
                                         </div>
                                     </div>
                                 ))}
@@ -497,19 +497,19 @@ const Checkout: React.FC = () => {
                             <div className="space-y-3 pt-2">
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Subtotal</span>
-                                    <span>₵{cartTotal.toFixed(2)}</span>
+                                    <span>₵{Number(cartTotal).toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Delivery Fee</span>
                                     <span className={`font-medium ${orderType === 'delivery' && !locationId ? 'text-orange-500' : 'text-gray-800'}`}>
                                         {orderType === 'delivery'
-                                            ? (locationId ? `₵${deliveryFee.toFixed(2)}` : '--')
+                                            ? (locationId ? `₵${Number(deliveryFee).toFixed(2)}` : '--')
                                             : 'Free'}
                                     </span>
                                 </div>
                                 <div className="border-t border-gray-100 pt-4 mt-2 flex justify-between font-bold text-xl">
                                     <span>Total</span>
-                                    <span className="text-brand-red">₵{totalAmount.toFixed(2)}</span>
+                                    <span className="text-brand-red">₵{Number(totalAmount).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>

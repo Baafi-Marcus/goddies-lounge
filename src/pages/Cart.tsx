@@ -39,7 +39,7 @@ const Cart: React.FC = () => {
                                         />
                                         <div className="flex-grow text-center sm:text-left">
                                             <h3 className="font-bold text-lg">{item.name}</h3>
-                                            <p className="text-brand-red font-bold">₵{item.price.toFixed(2)}</p>
+                                            <p className="text-brand-red font-bold">₵{Number(item.price).toFixed(2)}</p>
                                         </div>
 
                                         <div className="flex items-center gap-3">
@@ -59,7 +59,7 @@ const Cart: React.FC = () => {
                                         </div>
 
                                         <div className="text-right min-w-[80px]">
-                                            <p className="font-bold text-lg">₵{(item.price * item.quantity).toFixed(2)}</p>
+                                            <p className="font-bold text-lg">₵{Number(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
 
                                         <button
@@ -93,7 +93,7 @@ const Cart: React.FC = () => {
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Subtotal</span>
-                                    <span>₵{cartTotal.toFixed(2)}</span>
+                                    <span>₵{Number(cartTotal).toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-600">
                                     <span>Delivery Fee</span>
@@ -101,7 +101,7 @@ const Cart: React.FC = () => {
                                 </div>
                                 <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-xl">
                                     <span>Total</span>
-                                    <span className="text-brand-red">₵{cartTotal.toFixed(2)}</span>
+                                    <span className="text-brand-red">₵{Number(cartTotal).toFixed(2)}</span>
                                 </div>
                             </div>
 
