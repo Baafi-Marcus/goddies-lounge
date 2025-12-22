@@ -35,7 +35,7 @@ interface CheckoutFormValues {
     orderType: 'delivery' | 'pickup';
     name: string;
     phone: string;
-    paymentMethod: 'hubtel' | 'cash';
+    paymentMethod: 'hubtel' | 'cash' | '';
     locationId: string | undefined;
     address: string | undefined;
     pickupTime: string | undefined;
@@ -78,7 +78,7 @@ const Checkout: React.FC = () => {
         resolver: yupResolver(schema),
         defaultValues: {
             orderType: 'delivery',
-            paymentMethod: 'cash',
+            paymentMethod: '',
             name: userProfile?.full_name || '',
             phone: userProfile?.phone || '',
             pickupTime: ''
